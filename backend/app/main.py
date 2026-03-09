@@ -49,3 +49,13 @@ app.include_router(admin.router, prefix="/api")
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "TalentConnect API"}
+
+
+@app.get("/")
+async def root():
+    return {
+        "status": "ok",
+        "service": "TalentConnect API",
+        "docs": "/api/docs",
+        "health": "/api/health",
+    }
