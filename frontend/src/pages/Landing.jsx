@@ -7,9 +7,9 @@ import {
   ChevronRight,
   Layers3,
   ShieldCheck,
-  Sparkles,
   Users,
 } from 'lucide-react'
+import BrandMark from '../components/branding/BrandMark'
 
 const highlights = [
   {
@@ -33,19 +33,6 @@ const highlights = [
     description: 'Receive learning guidance, skill recommendations, and study roadmaps.',
   },
 ]
-
-function Logo() {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 shadow-[0_0_30px_rgba(79,82,229,0.35)]">
-        <Sparkles size={18} className="text-white" />
-      </div>
-      <span className="text-xl font-bold tracking-tight text-white font-display">
-        Talent<span className="text-brand-400">Connect</span>
-      </span>
-    </div>
-  )
-}
 
 function NavButton({ to, children, primary = false }) {
   return (
@@ -280,21 +267,54 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t border-white/10 bg-[#0c1120]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10 lg:flex-row lg:items-end lg:justify-between lg:px-8">
-          <div className="max-w-md">
-            <Logo />
-            <p className="mt-4 text-sm leading-7 text-gray-400">
-              TalentConnect is an intelligent student collaboration platform for peer learning, academic support, and guided growth.
-            </p>
-          </div>
-          <div className="flex flex-col items-start gap-3 text-sm text-gray-400 lg:items-end">
-            <div className="flex flex-wrap gap-5">
-              <a href="#" className="transition-colors hover:text-white">Privacy Policy</a>
-              <a href="#" className="transition-colors hover:text-white">Terms of Service</a>
-              <a href="#" className="transition-colors hover:text-white">Support</a>
+      <footer className="relative border-t border-white/10 bg-[linear-gradient(180deg,#0c1120_0%,#0a0f1b_100%)]">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-400/40 to-transparent" />
+        <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+            <div className="max-w-md">
+              <BrandMark />
+              <p className="mt-5 text-sm leading-7 text-gray-400">
+                TalentConnect brings peer learning, mentoring, academic collaboration, and intelligent guidance into one focused student platform.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3 text-xs text-gray-400">
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">Peer learning</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">Skill exchange</span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">AI guidance</span>
+              </div>
             </div>
+
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">Platform</h3>
+              <div className="mt-5 flex flex-col gap-3 text-sm text-gray-400">
+                <Link to="/login" className="transition-colors hover:text-white">Login</Link>
+                <Link to="/login" className="transition-colors hover:text-white">Get Started</Link>
+                <a href="https://talentconnect-backend-qu3k.onrender.com/api/docs" target="_blank" rel="noreferrer" className="transition-colors hover:text-white">API Docs</a>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">Company</h3>
+              <div className="mt-5 flex flex-col gap-3 text-sm text-gray-400">
+                <a href="#" className="transition-colors hover:text-white">Privacy Policy</a>
+                <a href="#" className="transition-colors hover:text-white">Terms of Service</a>
+                <a href="#" className="transition-colors hover:text-white">Support</a>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">Access</h3>
+              <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm text-gray-300">All collaborative tools open after authentication.</p>
+                <Link to="/login" className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-brand-300 transition-colors hover:text-white">
+                  Continue to login <ArrowRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-gray-500 lg:flex-row lg:items-center lg:justify-between">
             <p>© 2026 TalentConnect. All rights reserved.</p>
+            <p>Designed for collaborative student growth, mentoring, and guided academic support.</p>
           </div>
         </div>
       </footer>

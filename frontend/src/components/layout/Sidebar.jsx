@@ -1,10 +1,11 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, ShoppingBag, Calendar,
-  Wallet, Bot, Shield, Bell, LogOut, User, Sparkles, ChevronRight
+  Wallet, Bot, Shield, Bell, LogOut, User, ChevronRight
 } from 'lucide-react'
 import useAuthStore from '../../store/authStore'
 import clsx from 'clsx'
+import BrandMark from '../branding/BrandMark'
 
 const navItems = [
   { to: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
@@ -30,13 +31,8 @@ export function Sidebar() {
                       flex flex-col z-40 animate-fade-in">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-surface-border">
-        <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-            <Sparkles size={16} className="text-white" />
-          </div>
-          <span className="font-bold text-lg text-white font-display tracking-tight">
-            Talent<span className="text-brand-400">Connect</span>
-          </span>
+        <Link to="/" className="transition-opacity hover:opacity-90">
+          <BrandMark textClassName="text-lg" />
         </Link>
       </div>
 

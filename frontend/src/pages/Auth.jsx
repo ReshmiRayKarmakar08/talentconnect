@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { Eye, EyeOff, Sparkles, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import toast from 'react-hot-toast'
+import BrandMark from '../components/branding/BrandMark'
 
 function AuthLayout({ children, title, subtitle }) {
   return (
@@ -16,13 +17,8 @@ function AuthLayout({ children, title, subtitle }) {
 
       <div className="w-full max-w-md animate-slide-up">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-            <Sparkles size={20} className="text-white" />
-          </div>
-          <span className="font-bold text-2xl text-white font-display tracking-tight">
-            Talent<span className="text-brand-400">Connect</span>
-          </span>
+        <div className="mb-8 flex justify-center">
+          <BrandMark />
         </div>
 
         <div className="card p-8">
