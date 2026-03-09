@@ -95,6 +95,23 @@ talentconnect/
 
 This project can be deployed with **Vercel** for the frontend and **Render** for the backend.
 
+### Frontend on Vercel
+
+Use these settings when importing the repo into Vercel:
+
+- Framework Preset: `Vite`
+- Root Directory: `frontend`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+
+Set this environment variable in Vercel before deploying:
+
+```env
+VITE_API_BASE_URL=https://your-backend-domain/api
+```
+
+This repo includes [`frontend/vercel.json`](/d:/Desktop/talentconnect/frontend/vercel.json) so direct refreshes on routes like `/dashboard` and `/skills` resolve correctly in Vercel.
+
 ### Option 1: Docker Compose (Recommended)
 
 ```bash
