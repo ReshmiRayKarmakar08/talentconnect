@@ -5,9 +5,23 @@ from typing import List
 from app.db.session import get_db
 from app.core.security import get_current_user
 from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut
-from app.services.payment_service import create_payment_order, verify_payment, get_wallet, get_transactions
+from app.services.payment_service import (
+    create_payment_order,
+    get_transactions,
+    get_wallet,
+    payments_enabled,
+    verify_payment,
+)
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
+
+
+def ensure_payments_enabled():
+    if not payments_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail="Payments are not enabled in this deployment",
+        )
 
 
 @router.post("/order", response_model=PaymentOrderOut)
@@ -16,6 +30,7 @@ async def create_order(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    ensure_payments_enabled()
     try:
         return await create_payment_order(db, data.task_id)
     except ValueError as e:
@@ -28,6 +43,7 @@ async def verify(
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    ensure_payments_enabled()
     success = await verify_payment(
         db,
         data.razorpay_order_id,

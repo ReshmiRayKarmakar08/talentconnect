@@ -1,6 +1,5 @@
 import hmac
 import hashlib
-import razorpay
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -8,8 +7,23 @@ from app.core.config import settings
 from app.models.models import Payment, Task, Wallet, Transaction
 from app.schemas.schemas import PaymentOrderOut
 
+try:
+    import razorpay
+except ImportError:
+    razorpay = None
+
+
+def payments_enabled() -> bool:
+    return bool(
+        razorpay
+        and settings.RAZORPAY_KEY_ID
+        and settings.RAZORPAY_KEY_SECRET
+    )
+
 
 def get_razorpay_client():
+    if not payments_enabled():
+        raise RuntimeError("Payments are not enabled")
     return razorpay.Client(
         auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
     )
