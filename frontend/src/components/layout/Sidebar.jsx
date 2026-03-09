@@ -30,7 +30,7 @@ export function Sidebar() {
                       flex flex-col z-40 animate-fade-in">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-surface-border">
-        <Link to="/dashboard" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+        <Link to="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
             <Sparkles size={16} className="text-white" />
           </div>
