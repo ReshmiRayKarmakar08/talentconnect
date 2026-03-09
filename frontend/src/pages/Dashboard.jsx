@@ -73,7 +73,7 @@ export default function Dashboard() {
     <div className="p-8 animate-slide-up">
       {/* Header */}
       <div className="mb-8">
-        <p className="text-gray-500 text-sm mb-1">Welcome back 👋</p>
+        <p className="text-gray-500 text-sm mb-1">Welcome back</p>
         <h1 className="page-header">{user?.full_name}</h1>
         <p className="text-gray-400 mt-1 text-sm">@{user?.username} · {user?.college || 'Student'}</p>
       </div>

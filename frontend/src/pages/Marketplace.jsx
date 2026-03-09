@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Clock, DollarSign, ChevronRight, Loader2, Tag, Filter } from 'lucide-react'
+import { Plus, Search, Clock, DollarSign, ChevronRight, Loader2, Tag, Filter, CheckCircle2 } from 'lucide-react'
 import { tasksAPI } from '../utils/api'
 import { getAccessToken } from '../utils/authStorage'
 import toast from 'react-hot-toast'
@@ -159,8 +159,9 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onComplete, curren
           )}
 
           {task.status === 'submitted' && isPoster && (
-            <button onClick={() => { onComplete(task.id); onClose() }} className="btn-primary w-full">
-              ✅ Mark Complete & Release Payment
+            <button onClick={() => { onComplete(task.id); onClose() }} className="btn-primary w-full inline-flex items-center justify-center gap-2">
+              <CheckCircle2 size={16} />
+              Mark Complete and Release Payment
             </button>
           )}
         </div>
