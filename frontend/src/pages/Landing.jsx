@@ -234,7 +234,7 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-400">Verified growth</p>
                 <p className="mt-3 text-3xl font-semibold text-white font-display">Skills + trust</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:translate-y-8">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <p className="text-sm text-gray-400">Shared momentum</p>
                 <p className="mt-3 text-3xl font-semibold text-white font-display">Peer support</p>
               </div>
@@ -242,7 +242,7 @@ export default function LandingPage() {
                 <p className="text-sm text-gray-400">Academic help</p>
                 <p className="mt-3 text-3xl font-semibold text-white font-display">Task exchange</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:-translate-y-6">
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <p className="text-sm text-gray-400">Smarter learning</p>
                 <p className="mt-3 text-3xl font-semibold text-white font-display">AI guidance</p>
               </div>
