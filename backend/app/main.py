@@ -26,10 +26,17 @@ app = FastAPI(
     openapi_url="/api/openapi.json",
 )
 
+allowed_origins = {
+    "http://localhost:5173",
+    "http://localhost:5177",
+    settings.FRONTEND_URL,
+}
+
 # ─── MIDDLEWARE ───────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_URL, "http://localhost:5173"],
+    allow_origins=sorted(origin for origin in allowed_origins if origin),
+    allow_origin_regex=r"https://talentconnect(?:-[a-z0-9-]+)?\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
