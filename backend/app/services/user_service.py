@@ -47,6 +47,17 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> Opti
     return user
 
 
+async def reset_user_password(db: AsyncSession, email: str, new_password: str) -> Optional[User]:
+    user = await get_user_by_email(db, email)
+    if not user:
+        return None
+
+    user.hashed_password = get_password_hash(new_password)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
 async def update_user(db: AsyncSession, user: User, data: UserUpdate) -> User:
     for field, value in data.model_dump(exclude_none=True).items():
         setattr(user, field, value)

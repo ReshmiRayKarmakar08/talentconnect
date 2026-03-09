@@ -84,9 +84,10 @@ export default api
 
 // ─── Typed API helpers ───────────────────────────────────────
 export const authAPI = {
-  register: (d) => api.post('/auth/register', d),
-  login:    (d) => api.post('/auth/login', d),
-  me:       ()  => api.get('/auth/me'),
+  register:       (d) => api.post('/auth/register', d),
+  login:          (d) => api.post('/auth/login', d),
+  me:             ()  => api.get('/auth/me'),
+  forgotPassword: (d) => api.post('/auth/forgot-password', d),
 }
 
 export const usersAPI = {

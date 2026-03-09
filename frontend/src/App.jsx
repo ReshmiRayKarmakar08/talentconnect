@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast'
 import useAuthStore from './store/authStore'
 import AppLayout from './components/layout/AppLayout'
 import LandingPage from './pages/Landing'
-import { LoginPage, RegisterPage } from './pages/Auth'
+import { LoginPage, RegisterPage, ForgotPasswordPage } from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import SkillsPage from './pages/Skills'
 import Marketplace from './pages/Marketplace'
@@ -83,6 +83,7 @@ export default function App() {
         <Route path="/"         element={<LandingPage />} />
         <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
 
         {/* Protected App */}
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

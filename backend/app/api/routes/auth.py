@@ -2,13 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.schemas.schemas import UserRegister, UserLogin, TokenResponse, RefreshRequest, UserPublic
+from app.schemas.schemas import (
+    UserRegister,
+    UserLogin,
+    TokenResponse,
+    RefreshRequest,
+    PasswordResetRequest,
+    UserPublic,
+)
 from app.core.security import (
     create_access_token, create_refresh_token,
     decode_token, get_current_user
 )
 from app.services.user_service import (
-    create_user, get_user_by_email, get_user_by_username, authenticate_user
+    create_user, get_user_by_email, get_user_by_username, authenticate_user, reset_user_password
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -55,3 +62,11 @@ async def refresh_token(data: RefreshRequest, db: AsyncSession = Depends(get_db)
 @router.get("/me", response_model=UserPublic)
 async def get_me(current_user=Depends(get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password")
+async def forgot_password(data: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
+    user = await reset_user_password(db, data.email, data.new_password)
+    if not user:
+        raise HTTPException(status_code=404, detail="Account not found")
+    return {"message": "Password updated successfully"}

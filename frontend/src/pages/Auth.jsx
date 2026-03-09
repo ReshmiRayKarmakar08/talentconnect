@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import toast from 'react-hot-toast'
 import BrandMark from '../components/branding/BrandMark'
+import { authAPI } from '../utils/api'
 
 function AuthLayout({ children, title, subtitle }) {
   return (
@@ -95,6 +96,11 @@ export function LoginPage() {
         Don't have an account?{' '}
         <Link to="/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
           Sign up
+        </Link>
+      </p>
+      <p className="text-center text-gray-500 text-sm mt-2">
+        <Link to="/forgot-password" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+          Forgot password?
         </Link>
       </p>
     </AuthLayout>
@@ -195,6 +201,102 @@ export function RegisterPage() {
         Already have an account?{' '}
         <Link to="/login" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
           Sign in
+        </Link>
+      </p>
+    </AuthLayout>
+  )
+}
+
+export function ForgotPasswordPage() {
+  const { register, handleSubmit, watch, formState: { errors } } = useForm()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [showPwd, setShowPwd] = useState(false)
+  const [showConfirmPwd, setShowConfirmPwd] = useState(false)
+
+  const onSubmit = async (data) => {
+    setLoading(true)
+    try {
+      await authAPI.forgotPassword({
+        email: data.email,
+        new_password: data.new_password,
+      })
+      toast.success('Password reset successfully')
+      navigate('/login', { replace: true })
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to reset password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <AuthLayout title="Reset password" subtitle="Set a new password for your account">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div>
+          <label className="label">Email</label>
+          <input
+            {...register('email', { required: 'Email is required' })}
+            type="email"
+            className="input"
+            placeholder="you@university.edu"
+          />
+          {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+        </div>
+
+        <div>
+          <label className="label">New Password</label>
+          <div className="relative">
+            <input
+              {...register('new_password', { required: 'Required', minLength: { value: 8, message: 'Min 8 characters' } })}
+              type={showPwd ? 'text' : 'password'}
+              className="input pr-11"
+              placeholder="Min 8 characters"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd(!showPwd)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              {showPwd ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
+          {errors.new_password && <p className="text-red-400 text-xs mt-1">{errors.new_password.message}</p>}
+        </div>
+
+        <div>
+          <label className="label">Confirm Password</label>
+          <div className="relative">
+            <input
+              {...register('confirm_password', {
+                required: 'Required',
+                validate: (value) => value === watch('new_password') || 'Passwords do not match',
+              })}
+              type={showConfirmPwd ? 'text' : 'password'}
+              className="input pr-11"
+              placeholder="Repeat new password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              {showConfirmPwd ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+          </div>
+          {errors.confirm_password && <p className="text-red-400 text-xs mt-1">{errors.confirm_password.message}</p>}
+        </div>
+
+        <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2 mt-2">
+          {loading ? <Loader2 size={16} className="animate-spin" /> : null}
+          {loading ? 'Resetting password...' : 'Save New Password'}
+        </button>
+      </form>
+
+      <p className="text-center text-gray-500 text-sm mt-5">
+        Remembered it?{' '}
+        <Link to="/login" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+          Back to login
         </Link>
       </p>
     </AuthLayout>
