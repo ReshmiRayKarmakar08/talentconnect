@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, BookOpen, ShoppingBag, Calendar,
   Wallet, Bot, Shield, Bell, LogOut, User, Sparkles, ChevronRight
@@ -23,21 +23,21 @@ export function Sidebar() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
 
-  const handleLogout = () => { logout(); navigate('/login') }
+  const handleLogout = () => { logout(); navigate('/login', { replace: true }) }
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-surface-card border-r border-surface-border
                       flex flex-col z-40 animate-fade-in">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-surface-border">
-        <div className="flex items-center gap-2.5">
+        <Link to="/dashboard" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
             <Sparkles size={16} className="text-white" />
           </div>
           <span className="font-bold text-lg text-white font-display tracking-tight">
             Talent<span className="text-brand-400">Connect</span>
           </span>
-        </div>
+        </Link>
       </div>
 
       {/* Nav */}

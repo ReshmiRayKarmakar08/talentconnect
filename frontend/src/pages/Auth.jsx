@@ -47,7 +47,7 @@ export function LoginPage() {
     try {
       const user = await login(data.email, data.password)
       toast.success('Welcome back!')
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard')
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Invalid credentials')
     } finally {
@@ -117,7 +117,7 @@ export function RegisterPage() {
     try {
       const user = await registerUser(data)
       toast.success('Account created!')
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard')
+      navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Registration failed')
     } finally {
