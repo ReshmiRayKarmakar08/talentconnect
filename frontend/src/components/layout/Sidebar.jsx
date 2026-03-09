@@ -45,7 +45,7 @@ export function Sidebar() {
               to={to}
               className={({ isActive }) =>
                 clsx(
-                  'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group',
+                  'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-0',
                   isActive
                     ? 'bg-brand-600/20 text-brand-400 border border-brand-500/30'
                     : 'text-gray-400 hover:text-gray-100 hover:bg-surface-hover'
@@ -69,7 +69,7 @@ export function Sidebar() {
                 to={to}
                 className={({ isActive }) =>
                   clsx(
-                    'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all',
+                    'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 focus-visible:ring-offset-0',
                     isActive
                       ? 'bg-red-500/10 text-red-400 border border-red-500/20'
                       : 'text-gray-400 hover:text-gray-100 hover:bg-surface-hover'
