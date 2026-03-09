@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import useAuthStore from './store/authStore'
 import AppLayout from './components/layout/AppLayout'
+import LandingPage from './pages/Landing'
 import { LoginPage, RegisterPage } from './pages/Auth'
 import Dashboard from './pages/Dashboard'
 import SkillsPage from './pages/Skills'
@@ -47,22 +48,22 @@ export default function App() {
       />
       <Routes>
         {/* Public */}
+        <Route path="/"         element={<PublicRoute><LandingPage /></PublicRoute>} />
         <Route path="/login"    element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
 
         {/* Protected App */}
-        <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard"    element={<Dashboard />} />
-          <Route path="skills"       element={<SkillsPage />} />
-          <Route path="marketplace"  element={<Marketplace />} />
-          <Route path="sessions"     element={<Sessions />} />
-          <Route path="wallet"       element={<WalletPage />} />
-          <Route path="ai-assistant" element={<AIAssistant />} />
-          <Route path="admin"        element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="/dashboard"    element={<Dashboard />} />
+          <Route path="/skills"       element={<SkillsPage />} />
+          <Route path="/marketplace"  element={<Marketplace />} />
+          <Route path="/sessions"     element={<Sessions />} />
+          <Route path="/wallet"       element={<WalletPage />} />
+          <Route path="/ai-assistant" element={<AIAssistant />} />
+          <Route path="/admin"        element={<ProtectedRoute adminOnly><AdminPanel /></ProtectedRoute>} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )
