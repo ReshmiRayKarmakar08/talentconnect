@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand: 100 112 241;
+    --color-surface: 15 17 23;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply bg-surface text-gray-100 font-sans antialiased;
+    background-color: #0f1117;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0f1117; }
+  ::-webkit-scrollbar-thumb { background: #2a2f45; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #4f52e5; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-500 text-white font-semibold px-5 py-2.5 rounded-xl
+           transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-surface-hover border border-surface-border hover:border-brand-500 text-gray-200
+           font-medium px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply text-gray-400 hover:text-white hover:bg-surface-hover px-4 py-2 rounded-lg transition-all duration-150;
+  }
+
+  .card {
+    @apply bg-surface-card border border-surface-border rounded-2xl;
+  }
+
+  .input {
+    @apply w-full bg-surface-hover border border-surface-border rounded-xl px-4 py-3
+           text-gray-100 placeholder-gray-500 focus:outline-none focus:border-brand-500
+           focus:ring-1 focus:ring-brand-500/30 transition-all duration-200;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium;
+  }
+
+  .badge-green  { @apply bg-green-500/10 text-green-400 border border-green-500/20; }
+  .badge-blue   { @apply bg-brand-500/10 text-brand-400 border border-brand-500/20; }
+  .badge-yellow { @apply bg-yellow-500/10 text-yellow-400 border border-yellow-500/20; }
+  .badge-red    { @apply bg-red-500/10 text-red-400 border border-red-500/20; }
+  .badge-gray   { @apply bg-gray-500/10 text-gray-400 border border-gray-500/20; }
+
+  .page-header {
+    @apply text-3xl font-bold text-white font-display tracking-tight;
+  }
+
+  .section-title {
+    @apply text-xl font-semibold text-white;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-300 mb-1.5;
+  }
+}
