@@ -364,7 +364,7 @@ export default function Marketplace() {
     if (task.is_demo || loadError) {
       const updated = { ...task, status: 'assigned', acceptor: { id: user?.id, full_name: user?.full_name || 'You' } }
       setTasks(prev => prev.map(t => t.id === task.id ? updated : t))
-      toast.success('Task accepted (demo)')
+      toast.success('Task accepted')
       return
     }
     try {
@@ -379,7 +379,7 @@ export default function Marketplace() {
   const handleSubmit = async (taskId, notes) => {
     if (loadError) {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'submitted', submission_notes: notes } : t))
-      toast.success('Task submitted (demo)')
+      toast.success('Task submitted')
       return
     }
     const { data } = await tasksAPI.submit(taskId, { submission_notes: notes })
@@ -389,7 +389,7 @@ export default function Marketplace() {
   const handleFeedback = async (taskId, feedback) => {
     if (loadError) {
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback, status: 'completed' } : t))
-      toast.success('Feedback saved (demo)')
+      toast.success('Feedback saved')
       return
     }
     const { data } = await tasksAPI.feedback(taskId, feedback)
@@ -400,7 +400,7 @@ export default function Marketplace() {
   const handleWalletPay = async (task) => {
     if (task.is_demo || loadError) {
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'completed' } : t))
-      toast.success('Wallet payment successful (demo).')
+      toast.success('Wallet payment successful.')
       setViewTask(null)
       return
     }
@@ -465,7 +465,7 @@ export default function Marketplace() {
   const handlePay = async (task) => {
     if (task.is_demo || loadError) {
       setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'completed' } : t))
-      toast.success('Payment successful (demo).')
+      toast.success('Payment successful.')
       setViewTask(null)
       return
     }

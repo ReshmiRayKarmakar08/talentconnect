@@ -95,17 +95,21 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
     from sqlalchemy import or_
     # Ensure demo admin exists and return tokens (no password needed)
     admin = await get_user_by_email(db, settings.ADMIN_DEMO_EMAIL)
-    if not admin:
-        result = await db.execute(
-            select(User).where(or_(User.username == "admin", User.email == settings.ADMIN_DEMO_EMAIL))
-        )
-        admin = result.scalar_one_or_none()
+
+    # Resolve username conflicts for "admin"
+    conflict_result = await db.execute(
+        select(User).where(User.username == "admin", User.email != settings.ADMIN_DEMO_EMAIL)
+    )
+    conflict_user = conflict_result.scalar_one_or_none()
+    if conflict_user:
+        conflict_user.username = f"admin_user_{conflict_user.id}"
+        conflict_user.role = UserRole.student
 
     if not admin:
         admin = User(
             email=settings.ADMIN_DEMO_EMAIL,
             username="admin",
-            full_name="TalentConnect Admin",
+            full_name="Admin",
             hashed_password=get_password_hash(settings.ADMIN_DEMO_PASSWORD),
             college="TalentConnect",
             role=UserRole.admin,
@@ -130,6 +134,8 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
             ))
     else:
         admin.role = UserRole.admin
+        admin.username = "admin"
+        admin.full_name = "Admin"
         admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
 
     await db.execute(

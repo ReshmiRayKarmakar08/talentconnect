@@ -383,21 +383,24 @@ async def init_db():
 
         await session.commit()
 
-        # Ensure demo admin user exists (avoid duplicate username conflicts)
-        from sqlalchemy import or_
+        # Ensure demo admin user exists (email-only admin)
         admin_email = settings.ADMIN_DEMO_EMAIL.lower()
         admin_user = existing_users.get(admin_email)
-        if not admin_user:
-            admin_lookup = await session.execute(
-                select(User).where(or_(User.email == settings.ADMIN_DEMO_EMAIL, User.username == "admin"))
-            )
-            admin_user = admin_lookup.scalar_one_or_none()
+
+        # Resolve username conflicts: if someone else is using "admin", rename them
+        conflict_result = await session.execute(
+            select(User).where(User.username == "admin", User.email != settings.ADMIN_DEMO_EMAIL)
+        )
+        conflict_user = conflict_result.scalar_one_or_none()
+        if conflict_user:
+            conflict_user.username = f"admin_user_{conflict_user.id}"
+            conflict_user.role = UserRole.student
 
         if not admin_user:
             admin_user = User(
                 email=settings.ADMIN_DEMO_EMAIL,
                 username="admin",
-                full_name="TalentConnect Admin",
+                full_name="Admin",
                 hashed_password=get_password_hash(settings.ADMIN_DEMO_PASSWORD),
                 college="TalentConnect",
                 role=UserRole.admin,
@@ -421,13 +424,15 @@ async def init_db():
                     reference_id="welcome_bonus",
                 ))
         else:
-            # Ensure existing admin has admin role, correct email, and demo password
+            # Ensure existing admin has admin role, correct username/email/password
             admin_user.role = UserRole.admin
+            admin_user.username = "admin"
+            admin_user.full_name = "Admin"
             if admin_user.email != settings.ADMIN_DEMO_EMAIL:
                 admin_user.email = settings.ADMIN_DEMO_EMAIL
             admin_user.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
 
-        # Enforce single-admin rule
+        # Enforce single-admin rule (only admin email stays admin)
         await session.execute(
             User.__table__.update()
             .where(User.email != settings.ADMIN_DEMO_EMAIL)
