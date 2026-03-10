@@ -420,7 +420,8 @@ async def init_db():
                     reference_id="welcome_bonus",
                 ))
         else:
-            # Ensure existing admin has admin role and correct email
+            # Ensure existing admin has admin role, correct email, and demo password
             admin_user.role = UserRole.admin
             if admin_user.email != settings.ADMIN_DEMO_EMAIL:
                 admin_user.email = settings.ADMIN_DEMO_EMAIL
+            admin_user.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
