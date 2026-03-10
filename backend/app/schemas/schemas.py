@@ -37,7 +37,7 @@ class UserUpdate(BaseModel):
 
 class UserPublic(BaseModel):
     id: int
-    email: EmailStr
+    email: str
     username: str
     full_name: str
     bio: Optional[str] = None
