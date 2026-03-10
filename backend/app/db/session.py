@@ -438,3 +438,4 @@ async def init_db():
             .where(User.email != settings.ADMIN_DEMO_EMAIL)
             .values(role=UserRole.student)
         )
+        await session.commit()

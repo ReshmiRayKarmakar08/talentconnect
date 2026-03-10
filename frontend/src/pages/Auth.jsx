@@ -41,8 +41,8 @@ function AuthLayout({ children, title, subtitle, withCard = true }) {
 }
 
 export function LoginPage() {
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm()
-  const { login, loginWithTokens } = useAuthStore()
+  const { register, handleSubmit, formState: { errors }, setValue, getValues } = useForm()
+  const { login } = useAuthStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
@@ -61,20 +61,6 @@ export function LoginPage() {
       toast.error(e.response?.data?.detail || 'Invalid credentials')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleAdminLogin = async () => {
-    setAdminLoading(true)
-    try {
-      const { data } = await authAPI.adminLogin()
-      await loginWithTokens(data)
-      toast.success('Admin access granted')
-      navigate('/admin', { replace: true })
-    } catch (e) {
-      toast.error(e.response?.data?.detail || e.message || 'Admin login failed')
-    } finally {
-      setAdminLoading(false)
     }
   }
 
@@ -178,13 +164,12 @@ export function LoginPage() {
               onSubmit={(e) => {
                 e.preventDefault()
                 setAdminLoading(true)
-                authAPI.adminLogin()
-                  .then(({ data }) => {
-                    return loginWithTokens(data)
-                      .then(() => {
-                        toast.success('Admin access granted')
-                        navigate('/admin', { replace: true })
-                      })
+                const email = getValues('admin_email') || adminEmail
+                const password = getValues('admin_password') || adminPassword
+                login(email, password)
+                  .then((user) => {
+                    toast.success('Admin access granted')
+                    navigate(user.role === 'admin' ? '/admin' : '/dashboard', { replace: true })
                   })
                   .catch((e) => {
                     toast.error(e.response?.data?.detail || e.message || 'Admin login failed')

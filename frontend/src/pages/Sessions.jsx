@@ -284,7 +284,7 @@ function PaymentModal({ amount, walletBalance, onConfirm, onClose }) {
                     <input className="input" placeholder="Cardholder" />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">Demo only. No real charges will be made.</p>
+                <p className="text-xs text-gray-500">Test mode only. No real charges will be made.</p>
               </div>
             )}
 
@@ -298,7 +298,7 @@ function PaymentModal({ amount, walletBalance, onConfirm, onClose }) {
                   <option>Axis Bank</option>
                   <option>Kotak Mahindra</option>
                 </select>
-                <p className="text-xs text-gray-500">Demo only. This simulates a netbanking flow.</p>
+                <p className="text-xs text-gray-500">Test mode only. This simulates a netbanking flow.</p>
               </div>
             )}
 
@@ -319,7 +319,7 @@ function PaymentModal({ amount, walletBalance, onConfirm, onClose }) {
                     <label className="label">UPI ID</label>
                     <input className="input" placeholder="talentconnect@upi" />
                   </div>
-                  <p>Apps supported: GPay, PhonePe, Paytm (demo)</p>
+                  <p>Apps supported: GPay, PhonePe, Paytm</p>
                 </div>
               </div>
             )}

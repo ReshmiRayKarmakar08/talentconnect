@@ -42,12 +42,21 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
         data.email.lower() == settings.ADMIN_DEMO_EMAIL.lower()
         and data.password == settings.ADMIN_DEMO_PASSWORD
     ):
+        # Resolve username conflicts for "admin"
+        conflict_result = await db.execute(
+            select(User).where(User.username == "admin", User.email != settings.ADMIN_DEMO_EMAIL)
+        )
+        conflict_user = conflict_result.scalar_one_or_none()
+        if conflict_user:
+            conflict_user.username = f"admin_user_{conflict_user.id}"
+            conflict_user.role = UserRole.student
+
         admin = await get_user_by_email(db, settings.ADMIN_DEMO_EMAIL)
         if not admin:
             admin = User(
                 email=settings.ADMIN_DEMO_EMAIL,
                 username="admin",
-                full_name="TalentConnect Admin",
+                full_name="Admin",
                 hashed_password=get_password_hash(settings.ADMIN_DEMO_PASSWORD),
                 college="TalentConnect",
                 role=UserRole.admin,
@@ -72,7 +81,17 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
                 ))
         else:
             admin.role = UserRole.admin
+            admin.username = "admin"
+            admin.full_name = "Admin"
+            admin.college = "TalentConnect"
+            admin.is_verified = True
             admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
+
+        await db.execute(
+            User.__table__.update()
+            .where(User.email != settings.ADMIN_DEMO_EMAIL)
+            .values(role=UserRole.student)
+        )
         await db.commit()
         return TokenResponse(
             access_token=create_access_token({"sub": str(admin.id), "role": admin.role}),
@@ -92,10 +111,7 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
 
 @router.post("/admin-login", response_model=TokenResponse)
 async def admin_login(db: AsyncSession = Depends(get_db)):
-    from sqlalchemy import or_
     # Ensure demo admin exists and return tokens (no password needed)
-    admin = await get_user_by_email(db, settings.ADMIN_DEMO_EMAIL)
-
     # Resolve username conflicts for "admin"
     conflict_result = await db.execute(
         select(User).where(User.username == "admin", User.email != settings.ADMIN_DEMO_EMAIL)
@@ -105,6 +121,7 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
         conflict_user.username = f"admin_user_{conflict_user.id}"
         conflict_user.role = UserRole.student
 
+    admin = await get_user_by_email(db, settings.ADMIN_DEMO_EMAIL)
     if not admin:
         admin = User(
             email=settings.ADMIN_DEMO_EMAIL,
@@ -133,9 +150,12 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
                 reference_id="welcome_bonus",
             ))
     else:
+        # Normalize admin identity and password
         admin.role = UserRole.admin
         admin.username = "admin"
         admin.full_name = "Admin"
+        admin.college = "TalentConnect"
+        admin.is_verified = True
         admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
 
     await db.execute(

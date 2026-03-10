@@ -189,10 +189,18 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    poster: Mapped["User"] = relationship("User", foreign_keys=[poster_id], back_populates="posted_tasks")
-    acceptor: Mapped[Optional["User"]] = relationship("User", foreign_keys=[acceptor_id], back_populates="accepted_tasks")
-    payment: Mapped[Optional["Payment"]] = relationship("Payment", back_populates="task", uselist=False)
-    feedback: Mapped[Optional["TaskFeedback"]] = relationship("TaskFeedback", back_populates="task", uselist=False)
+    poster: Mapped["User"] = relationship(
+        "User", foreign_keys=[poster_id], back_populates="posted_tasks", lazy="selectin"
+    )
+    acceptor: Mapped[Optional["User"]] = relationship(
+        "User", foreign_keys=[acceptor_id], back_populates="accepted_tasks", lazy="selectin"
+    )
+    payment: Mapped[Optional["Payment"]] = relationship(
+        "Payment", back_populates="task", uselist=False, lazy="selectin"
+    )
+    feedback: Mapped[Optional["TaskFeedback"]] = relationship(
+        "TaskFeedback", back_populates="task", uselist=False, lazy="selectin"
+    )
 
 
 class TaskFeedback(Base):

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Search, Clock, DollarSign, ChevronRight, Loader2, Tag, Filter, CheckCircle2 } from 'lucide-react'
+import { Plus, Search, Clock, DollarSign, Loader2, Tag, CheckCircle2 } from 'lucide-react'
 import { paymentsAPI, tasksAPI } from '../utils/api'
 import { getAccessToken } from '../utils/authStorage'
 import toast from 'react-hot-toast'
@@ -11,41 +11,6 @@ const statusColors = {
   completed: 'badge-gray', disputed: 'badge-red', flagged: 'badge-red',
 }
 
-const DEMO_TASKS = [
-  {
-    id: 'demo-1',
-    title: 'React dashboard polish',
-    description: 'Refine cards and data tables for a student dashboard layout.',
-    subject: 'Web Development',
-    budget: 280,
-    deadline: new Date(Date.now() + 3 * 86400000).toISOString(),
-    status: 'open',
-    is_demo: true,
-    poster: { full_name: 'Demo User' },
-  },
-  {
-    id: 'demo-2',
-    title: 'SQL queries for assignment',
-    description: 'Need joins and aggregations for a database assignment.',
-    subject: 'Database',
-    budget: 190,
-    deadline: new Date(Date.now() + 4 * 86400000).toISOString(),
-    status: 'open',
-    is_demo: true,
-    poster: { full_name: 'Demo User' },
-  },
-  {
-    id: 'demo-3',
-    title: 'Python debugging help',
-    description: 'Fix edge cases in a sorting algorithm and explain complexity.',
-    subject: 'Data Structures',
-    budget: 220,
-    deadline: new Date(Date.now() + 2 * 86400000).toISOString(),
-    status: 'open',
-    is_demo: true,
-    poster: { full_name: 'Demo User' },
-  },
-]
 
 function TaskCard({ task, onAccept, onView, isMyTask }) {
   const isOpen = task.status === 'open'
@@ -245,15 +210,15 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onWalletPay
                 Use Wallet Credit
               </button>
               <div className="rounded-xl border border-surface-border bg-surface-hover p-4 text-xs text-gray-400">
-                <p className="text-sm font-semibold text-white">UPI Demo</p>
+                <p className="text-sm font-semibold text-white">UPI Payment</p>
                 <div className="mt-2 flex items-center gap-4">
                   <div className="h-16 w-16 rounded-lg border border-white/10 bg-[linear-gradient(135deg,#1a2034,#0f121d)] flex items-center justify-center text-[10px] text-gray-400">
                     UPI QR
                   </div>
                   <div>
-                    <p>UPI ID: talentconnect@upi (demo)</p>
-                    <p>Apps: GPay, PhonePe, Paytm (demo)</p>
-                    <p>Use Razorpay for real test payments.</p>
+                    <p>UPI ID: talentconnect@upi</p>
+                    <p>Apps: GPay, PhonePe, Paytm</p>
+                    <p>Use Razorpay test mode for card or UPI validation.</p>
                   </div>
                 </div>
               </div>
@@ -321,7 +286,6 @@ export default function Marketplace() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
   const [payingTaskId, setPayingTaskId] = useState(null)
-  const [demoLoading, setDemoLoading] = useState(false)
 
   const handleAuthFailure = (e, fallbackMessage = 'Failed') => {
     const status = e.response?.status
@@ -341,16 +305,7 @@ export default function Marketplace() {
     Promise.all([tasksAPI.list(), tasksAPI.my()])
       .then(([all, my]) => { setTasks(all.data); setMyTasks(my.data) })
       .catch((e) => {
-        if (!e.response) {
-          setLoadError(true)
-          setTasks(DEMO_TASKS)
-          setMyTasks([])
-          setTab('browse')
-          return
-        }
         setLoadError(true)
-        setTasks(DEMO_TASKS)
-        setMyTasks([])
         handleAuthFailure(e, 'Failed to load tasks')
       })
       .finally(() => setLoading(false))
@@ -361,12 +316,6 @@ export default function Marketplace() {
   }, [navigate])
 
   const handleAccept = async (task) => {
-    if (task.is_demo || loadError) {
-      const updated = { ...task, status: 'assigned', acceptor: { id: user?.id, full_name: user?.full_name || 'You' } }
-      setTasks(prev => prev.map(t => t.id === task.id ? updated : t))
-      toast.success('Task accepted')
-      return
-    }
     try {
       const { data } = await tasksAPI.accept(task.id)
       setTasks(prev => prev.map(t => t.id === task.id ? data : t))
@@ -377,33 +326,17 @@ export default function Marketplace() {
   }
 
   const handleSubmit = async (taskId, notes) => {
-    if (loadError) {
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'submitted', submission_notes: notes } : t))
-      toast.success('Task submitted')
-      return
-    }
     const { data } = await tasksAPI.submit(taskId, { submission_notes: notes })
     setMyTasks(prev => prev.map(t => t.id === taskId ? data : t))
   }
 
   const handleFeedback = async (taskId, feedback) => {
-    if (loadError) {
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback, status: 'completed' } : t))
-      toast.success('Feedback saved')
-      return
-    }
     const { data } = await tasksAPI.feedback(taskId, feedback)
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
     setMyTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
   }
 
   const handleWalletPay = async (task) => {
-    if (task.is_demo || loadError) {
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'completed' } : t))
-      toast.success('Wallet payment successful.')
-      setViewTask(null)
-      return
-    }
     if (payingTaskId) return
     setPayingTaskId(task.id)
     try {
@@ -463,12 +396,6 @@ export default function Marketplace() {
   }
 
   const handlePay = async (task) => {
-    if (task.is_demo || loadError) {
-      setTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: 'completed' } : t))
-      toast.success('Payment successful.')
-      setViewTask(null)
-      return
-    }
     if (payingTaskId) return
     setPayingTaskId(task.id)
     try {
@@ -484,30 +411,6 @@ export default function Marketplace() {
       handleAuthFailure(e, 'Payment failed')
     } finally {
       setPayingTaskId(null)
-    }
-  }
-
-  const runDemoPayment = async () => {
-    if (demoLoading) return
-    setDemoLoading(true)
-    try {
-      const loaded = await loadRazorpay()
-      if (!loaded) {
-        toast.error('Failed to load Razorpay')
-        return
-      }
-
-      const { data: demo } = await paymentsAPI.demoOrder()
-      toast.success('Demo task created. Opening Razorpay...')
-      await openCheckout({ taskId: demo.task_id, taskTitle: demo.task_title, order: demo })
-
-      const [all, mine] = await Promise.all([tasksAPI.list(), tasksAPI.my()])
-      setTasks(all.data)
-      setMyTasks(mine.data)
-    } catch (e) {
-      handleAuthFailure(e, 'Demo payment failed')
-    } finally {
-      setDemoLoading(false)
     }
   }
 
@@ -529,7 +432,7 @@ export default function Marketplace() {
           <div>
             <p className="text-sm font-semibold text-white">Razorpay Test Mode</p>
             <p className="text-xs text-gray-400 mt-1">
-              Use Razorpay test keys and a test card to validate payments. This demo creates a ₹1 task, submits it, and opens checkout.
+              Use Razorpay test keys and a test card to validate payments in a safe sandbox.
             </p>
             <p className="text-xs text-gray-400 mt-2">
               For a full transfer, use two accounts: one posts the task and pays, the other accepts and submits it.
@@ -538,16 +441,8 @@ export default function Marketplace() {
               <p>Test card: 4111 1111 1111 1111</p>
               <p>Expiry: Any future date · CVV: 123 · OTP: 123456</p>
             </div>
+          </div>
         </div>
-        <button
-          onClick={runDemoPayment}
-          disabled={demoLoading}
-          className="btn-primary inline-flex items-center justify-center gap-2"
-        >
-          {demoLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-          Run Demo Payment
-        </button>
-      </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-surface-card border border-surface-border rounded-xl p-1 w-fit mb-6">
@@ -571,12 +466,11 @@ export default function Marketplace() {
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-400" size={28} /></div>
       ) : displayTasks.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-gray-500">{loadError ? 'No demo tasks available' : 'No tasks found'}</p>
-          {!loadError && (
-            <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 inline-flex">Post a Task</button>
-          )}
-          {loadError && (
+          <p className="text-gray-500">{loadError ? 'Failed to load tasks' : 'No tasks found'}</p>
+          {loadError ? (
             <button onClick={loadTasks} className="btn-secondary mt-4 inline-flex">Retry</button>
+          ) : (
+            <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 inline-flex">Post a Task</button>
           )}
         </div>
       ) : (

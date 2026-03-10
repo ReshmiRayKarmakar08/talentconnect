@@ -12,7 +12,7 @@ async def create_task(db: AsyncSession, poster_id: int, data: TaskCreate) -> Tas
     db.add(task)
     await db.commit()
     await db.refresh(task)
-    return task
+    return await get_task_by_id(db, task.id)
 
 
 async def get_task_by_id(db: AsyncSession, task_id: int) -> Optional[Task]:
@@ -33,7 +33,11 @@ async def get_open_tasks(db: AsyncSession, skip: int = 0, limit: int = 50) -> Li
     result = await db.execute(
         select(Task)
         .where(Task.status == TaskStatus.open, Task.is_flagged == False)
-        .options(selectinload(Task.poster))
+        .options(
+            selectinload(Task.poster),
+            selectinload(Task.acceptor),
+            selectinload(Task.feedback),
+        )
         .order_by(Task.created_at.desc())
         .offset(skip).limit(limit)
     )
@@ -45,7 +49,11 @@ async def get_user_tasks(db: AsyncSession, user_id: int) -> List[Task]:
     result = await db.execute(
         select(Task)
         .where(or_(Task.poster_id == user_id, Task.acceptor_id == user_id))
-        .options(selectinload(Task.poster), selectinload(Task.acceptor))
+        .options(
+            selectinload(Task.poster),
+            selectinload(Task.acceptor),
+            selectinload(Task.feedback),
+        )
         .order_by(Task.created_at.desc())
     )
     return result.scalars().all()
@@ -59,7 +67,7 @@ async def accept_task(db: AsyncSession, task_id: int, acceptor_id: int) -> Optio
     task.status = TaskStatus.assigned
     await db.commit()
     await db.refresh(task)
-    return task
+    return await get_task_by_id(db, task_id)
 
 
 async def submit_task(
@@ -73,7 +81,7 @@ async def submit_task(
     task.status = TaskStatus.submitted
     await db.commit()
     await db.refresh(task)
-    return task
+    return await get_task_by_id(db, task_id)
 
 
 async def complete_task(db: AsyncSession, task_id: int) -> Optional[Task]:
@@ -102,7 +110,7 @@ async def complete_task(db: AsyncSession, task_id: int) -> Optional[Task]:
 
     await db.commit()
     await db.refresh(task)
-    return task
+    return await get_task_by_id(db, task_id)
 
 
 async def flag_task(db: AsyncSession, task_id: int, reason: str) -> Optional[Task]:
@@ -136,7 +144,11 @@ async def add_task_feedback(
 async def get_all_tasks(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[Task]:
     result = await db.execute(
         select(Task)
-        .options(selectinload(Task.poster), selectinload(Task.acceptor))
+        .options(
+            selectinload(Task.poster),
+            selectinload(Task.acceptor),
+            selectinload(Task.feedback),
+        )
         .order_by(Task.created_at.desc())
         .offset(skip).limit(limit)
     )
