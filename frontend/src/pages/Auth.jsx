@@ -72,7 +72,7 @@ export function LoginPage() {
       toast.success('Admin access granted')
       navigate('/admin', { replace: true })
     } catch (e) {
-      toast.error(e.response?.data?.detail || 'Admin login failed')
+      toast.error(e.response?.data?.detail || e.message || 'Admin login failed')
     } finally {
       setAdminLoading(false)
     }
@@ -187,7 +187,7 @@ export function LoginPage() {
                       })
                   })
                   .catch((e) => {
-                    toast.error(e.response?.data?.detail || 'Admin login failed')
+                    toast.error(e.response?.data?.detail || e.message || 'Admin login failed')
                   })
                   .finally(() => setAdminLoading(false))
               }}
