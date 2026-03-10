@@ -133,6 +133,7 @@ export const paymentsAPI = {
   demoOrder:     ()  => api.post('/payments/demo'),
   verify:        (d) => api.post('/payments/verify', d),
   walletPay:     (d) => api.post('/payments/wallet-pay', d),
+  walletDebit:   (d) => api.post('/payments/wallet-debit', d),
   wallet:        ()  => api.get('/payments/wallet'),
   transactions:  ()  => api.get('/payments/transactions'),
 }

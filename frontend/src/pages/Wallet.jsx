@@ -56,6 +56,11 @@ export default function WalletPage() {
           <p className="text-brand-400 text-xs mt-2">
             {walletLoading ? 'Loading wallet...' : 'Updated just now'}
           </p>
+          {!walletLoading && wallet.total_spent === 0 && wallet.balance >= 1000 && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-500/10 px-3 py-1 text-[11px] text-brand-200">
+              Welcome credit ₹1000 applied
+            </div>
+          )}
         </div>
         <div className="card p-6 flex items-center gap-4">
           <div className="w-11 h-11 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">

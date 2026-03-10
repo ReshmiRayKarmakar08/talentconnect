@@ -283,6 +283,7 @@ export default function Marketplace() {
   const [showCreate, setShowCreate] = useState(false)
   const [viewTask, setViewTask] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [payingTaskId, setPayingTaskId] = useState(null)
   const [demoLoading, setDemoLoading] = useState(false)
 
@@ -298,13 +299,20 @@ export default function Marketplace() {
     return false
   }
 
-  useEffect(() => {
+  const loadTasks = () => {
+    setLoading(true)
+    setLoadError(false)
     Promise.all([tasksAPI.list(), tasksAPI.my()])
       .then(([all, my]) => { setTasks(all.data); setMyTasks(my.data) })
       .catch((e) => {
+        setLoadError(true)
         handleAuthFailure(e, 'Failed to load tasks')
       })
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    loadTasks()
   }, [navigate])
 
   const handleAccept = async (task) => {
@@ -488,6 +496,11 @@ export default function Marketplace() {
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-400" size={28} /></div>
+      ) : loadError ? (
+        <div className="card p-12 text-center">
+          <p className="text-gray-500">Failed to load tasks</p>
+          <button onClick={loadTasks} className="btn-primary mt-4 inline-flex">Retry</button>
+        </div>
       ) : displayTasks.length === 0 ? (
         <div className="card p-12 text-center">
           <p className="text-gray-500">No tasks found</p>

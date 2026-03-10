@@ -164,3 +164,30 @@ async def wallet_pay(db: AsyncSession, task_id: int, poster_id: int) -> Task:
 
     await db.commit()
     return task
+
+
+async def wallet_debit(
+    db: AsyncSession,
+    user_id: int,
+    amount: float,
+    description: str,
+    reference_id: str | None = None,
+) -> Wallet:
+    if amount <= 0:
+        raise ValueError("Amount must be positive")
+    wallet = await get_wallet(db, user_id)
+    if wallet.balance < amount:
+        raise ValueError("Insufficient wallet balance")
+
+    wallet.balance -= amount
+    wallet.total_spent += amount
+    db.add(Transaction(
+        wallet_id=wallet.id,
+        amount=amount,
+        transaction_type="debit",
+        description=description,
+        reference_id=reference_id,
+    ))
+    await db.commit()
+    await db.refresh(wallet)
+    return wallet

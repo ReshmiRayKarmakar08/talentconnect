@@ -123,6 +123,27 @@ SAMPLE_TASKS = [
         "budget": 200,
         "deadline_days": 4,
     },
+    {
+        "title": "Design a UI kit for student dashboard",
+        "description": "Create a cohesive UI kit with buttons, cards, and form styles for a student platform.",
+        "subject": "UI/UX Design",
+        "budget": 250,
+        "deadline_days": 6,
+    },
+    {
+        "title": "Build a Node.js REST API starter",
+        "description": "Need a boilerplate with auth, CRUD routes, and basic validation.",
+        "subject": "Web Development",
+        "budget": 350,
+        "deadline_days": 5,
+    },
+    {
+        "title": "Data cleanup for analytics report",
+        "description": "Clean CSV data, remove duplicates, and summarize metrics in a short report.",
+        "subject": "Data Science",
+        "budget": 180,
+        "deadline_days": 3,
+    },
 ]
 
 
@@ -146,7 +167,7 @@ async def init_db():
 
     async with AsyncSessionLocal() as session:
         from app.core.security import get_password_hash
-        from app.models.models import Skill, User, UserSkill, VerificationStatus, SkillLevel, Wallet, Transaction, Task, UserRole
+        from app.models.models import Skill, User, UserSkill, VerificationStatus, SkillLevel, Wallet, Transaction, Task, UserRole, LearningSession, SessionStatus
         from datetime import datetime, timedelta
 
         existing_result = await session.execute(select(Skill))
@@ -241,6 +262,66 @@ async def init_db():
                         deadline=datetime.utcnow() + timedelta(days=item["deadline_days"]),
                     ))
                 session.add_all(tasks)
+
+        # Seed sample learner + sessions
+        learner_email = "learner.demo@example.com"
+        learner = existing_users.get(learner_email)
+        if not learner:
+            learner = User(
+                email=learner_email,
+                username="learner_demo",
+                full_name="Demo Learner",
+                hashed_password=get_password_hash("12345678"),
+                college="Demo University",
+                reputation_score=4.1,
+                is_verified=True,
+            )
+            session.add(learner)
+            await session.flush()
+            wallet = Wallet(
+                user_id=learner.id,
+                balance=float(settings.INITIAL_WALLET_CREDIT or 0),
+                total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+            )
+            session.add(wallet)
+            await session.flush()
+            if settings.INITIAL_WALLET_CREDIT:
+                session.add(Transaction(
+                    wallet_id=wallet.id,
+                    amount=float(settings.INITIAL_WALLET_CREDIT),
+                    transaction_type="credit",
+                    description="Welcome bonus",
+                    reference_id="welcome_bonus",
+                ))
+            existing_users[learner.email.lower()] = learner
+
+        existing_session_result = await session.execute(select(LearningSession))
+        if existing_session_result.scalars().first() is None and SAMPLE_MENTORS:
+            mentor_user = existing_users.get(SAMPLE_MENTORS[0]["email"].lower())
+            skill = skill_map.get(SAMPLE_MENTORS[0]["skills"][0][0].lower())
+            if mentor_user and learner and skill:
+                session.add_all([
+                    LearningSession(
+                        mentor_id=mentor_user.id,
+                        learner_id=learner.id,
+                        skill_id=skill.id,
+                        status=SessionStatus.confirmed,
+                        scheduled_at=datetime.utcnow() + timedelta(days=1),
+                        duration_minutes=60,
+                        meet_link="https://meet.google.com/demo-session",
+                        notes="Demo confirmed session",
+                    ),
+                    LearningSession(
+                        mentor_id=mentor_user.id,
+                        learner_id=learner.id,
+                        skill_id=skill.id,
+                        status=SessionStatus.completed,
+                        scheduled_at=datetime.utcnow() - timedelta(days=2),
+                        duration_minutes=60,
+                        meet_link="https://meet.google.com/demo-completed",
+                        notes="Demo completed session",
+                    ),
+                ])
 
         # Ensure initial wallet credit for users who have no transactions yet
         if settings.INITIAL_WALLET_CREDIT:

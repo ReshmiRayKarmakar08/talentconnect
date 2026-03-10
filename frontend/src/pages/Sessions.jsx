@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Calendar, Video, Star, CheckCircle, XCircle, Clock, Loader2, Plus, Search, BookOpen } from 'lucide-react'
-import { sessionsAPI, skillsAPI } from '../utils/api'
+import { sessionsAPI, skillsAPI, paymentsAPI } from '../utils/api'
 import toast from 'react-hot-toast'
 import useAuthStore from '../store/authStore'
 
@@ -158,15 +158,16 @@ function BookSessionModal({ mentor, onClose, onBooked }) {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await sessionsAPI.book({
-        mentor_id: mentor.user.id,
-        skill_id: mentor.user_skill.skill.id,
-        scheduled_at: form.scheduled_at,
-        duration_minutes: Number(form.duration_minutes),
-        notes: form.notes,
+      await onBooked({
+        mentor,
+        form: {
+          mentor_id: mentor.user.id,
+          skill_id: mentor.user_skill.skill.id,
+          scheduled_at: form.scheduled_at,
+          duration_minutes: Number(form.duration_minutes),
+          notes: form.notes,
+        },
       })
-      onBooked(data)
-      toast.success('Session request sent!')
       onClose()
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Failed to book session')
@@ -230,6 +231,112 @@ function BookSessionModal({ mentor, onClose, onBooked }) {
   )
 }
 
+function PaymentModal({ amount, walletBalance, onConfirm, onClose }) {
+  const [method, setMethod] = useState('wallet')
+  const formattedAmount = `₹${amount.toFixed(2)}`
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="card w-full max-w-3xl overflow-hidden">
+        <div className="grid md:grid-cols-[240px_1fr]">
+          <div className="border-r border-surface-border bg-surface-hover p-5">
+            <p className="text-xs text-gray-500 uppercase tracking-[0.2em]">Payment Method</p>
+            <div className="mt-4 space-y-2">
+              {['card', 'netbanking', 'wallet', 'upi'].map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setMethod(item)}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                    method === item ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {item === 'card' && 'Credit / Debit Card'}
+                  {item === 'netbanking' && 'Netbanking'}
+                  {item === 'wallet' && 'Wallet'}
+                  {item === 'upi' && 'UPI'}
+                </button>
+              ))}
+            </div>
+            <p className="mt-6 text-xs text-gray-500">Amount payable</p>
+            <p className="text-xl font-semibold text-white">{formattedAmount}</p>
+          </div>
+
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-white">Pay with {method.toUpperCase()}</h3>
+
+            {method === 'card' && (
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className="label">Card Number</label>
+                  <input className="input" placeholder="4111 1111 1111 1111" />
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="label">Expiry</label>
+                    <input className="input" placeholder="MM/YY" />
+                  </div>
+                  <div>
+                    <label className="label">CVV</label>
+                    <input className="input" placeholder="123" />
+                  </div>
+                  <div>
+                    <label className="label">Name</label>
+                    <input className="input" placeholder="Cardholder" />
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500">Demo only. No real charges will be made.</p>
+              </div>
+            )}
+
+            {method === 'netbanking' && (
+              <div className="mt-4 space-y-3">
+                <label className="label">Select Bank</label>
+                <select className="input">
+                  <option>HDFC Bank</option>
+                  <option>ICICI Bank</option>
+                  <option>State Bank of India</option>
+                  <option>Axis Bank</option>
+                  <option>Kotak Mahindra</option>
+                </select>
+                <p className="text-xs text-gray-500">Demo only. This simulates a netbanking flow.</p>
+              </div>
+            )}
+
+            {method === 'wallet' && (
+              <div className="mt-4 space-y-3 text-sm text-gray-400">
+                <p>Wallet balance: ₹{walletBalance.toFixed(2)}</p>
+                <p>Use wallet credits to confirm this session instantly.</p>
+              </div>
+            )}
+
+            {method === 'upi' && (
+              <div className="mt-4 grid gap-3 md:grid-cols-[120px_1fr] items-center">
+                <div className="h-28 w-28 rounded-xl border border-white/10 bg-[linear-gradient(135deg,#1a2034,#0f121d)] flex items-center justify-center text-[10px] text-gray-400">
+                  UPI QR
+                </div>
+                <div className="space-y-2 text-sm text-gray-400">
+                  <div>
+                    <label className="label">UPI ID</label>
+                    <input className="input" placeholder="talentconnect@upi" />
+                  </div>
+                  <p>Apps supported: GPay, PhonePe, Paytm (demo)</p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
+              <button onClick={() => onConfirm(method)} className="btn-primary flex-1">
+                Pay Now
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Sessions() {
   const { user } = useAuthStore()
   const navigate = useNavigate()
@@ -240,6 +347,9 @@ export default function Sessions() {
   const [mentors, setMentors] = useState([])
   const [mentorLoading, setMentorLoading] = useState(false)
   const [bookMentor, setBookMentor] = useState(null)
+  const [pendingBooking, setPendingBooking] = useState(null)
+  const [showPayment, setShowPayment] = useState(false)
+  const [walletBalance, setWalletBalance] = useState(0)
   const [loading, setLoading] = useState(true)
   const [feedbackSession, setFeedbackSession] = useState(null)
   const [filter, setFilter] = useState('all')
@@ -248,10 +358,12 @@ export default function Sessions() {
     Promise.all([
       sessionsAPI.my(),
       skillsAPI.list(),
+      paymentsAPI.wallet(),
     ])
-      .then(([sessionRes, skillRes]) => {
+      .then(([sessionRes, skillRes, walletRes]) => {
         setSessions(sessionRes.data)
         setSkills(skillRes.data)
+        setWalletBalance(walletRes.data?.balance || 0)
       })
       .finally(() => setLoading(false))
   }, [])
@@ -292,9 +404,37 @@ export default function Sessions() {
     setSessions(sessions.map(s => s.id === sessionId ? {...s, feedback: data} : s))
   }
 
-  const handleBooked = (session) => {
-    setSessions((prev) => [session, ...prev])
-    setFilter('all')
+  const handleBooked = (payload) => {
+    setPendingBooking(payload)
+    setShowPayment(true)
+  }
+
+  const handlePaymentConfirm = async (method) => {
+    if (!pendingBooking) return
+    const rate = pendingBooking.mentor.user_skill.hourly_rate || 0
+    const amount = (rate * pendingBooking.form.duration_minutes) / 60
+    if (method === 'wallet' && walletBalance < amount) {
+      toast.error('Insufficient wallet balance')
+      return
+    }
+    try {
+      if (amount > 0 && method === 'wallet') {
+        const { data: wallet } = await paymentsAPI.walletDebit({
+          amount,
+          description: `Session booking with ${pendingBooking.mentor.user.full_name}`,
+          reference_id: `session-${pendingBooking.mentor.user.id}`,
+        })
+        setWalletBalance(wallet.balance)
+      }
+      const { data } = await sessionsAPI.book(pendingBooking.form)
+      setSessions((prev) => [data, ...prev])
+      setFilter('all')
+      toast.success('Session booked successfully')
+      setShowPayment(false)
+      setPendingBooking(null)
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Payment failed')
+    }
   }
 
   return (
@@ -303,6 +443,9 @@ export default function Sessions() {
         <div>
           <h1 className="page-header">My Sessions</h1>
           <p className="text-gray-500 text-sm mt-1">Manage your learning sessions</p>
+        </div>
+        <div className="text-xs text-gray-400">
+          Wallet balance: <span className="text-brand-300 font-semibold">₹{walletBalance.toFixed(2)}</span>
         </div>
       </div>
 
@@ -405,6 +548,18 @@ export default function Sessions() {
           mentor={bookMentor}
           onClose={() => setBookMentor(null)}
           onBooked={handleBooked}
+        />
+      )}
+
+      {showPayment && pendingBooking && (
+        <PaymentModal
+          amount={(pendingBooking.mentor.user_skill.hourly_rate || 0) * pendingBooking.form.duration_minutes / 60}
+          walletBalance={walletBalance}
+          onConfirm={handlePaymentConfirm}
+          onClose={() => {
+            setShowPayment(false)
+            setPendingBooking(null)
+          }}
         />
       )}
     </div>

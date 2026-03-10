@@ -256,6 +256,11 @@ class PaymentVerify(BaseModel):
 class WalletPaymentRequest(BaseModel):
     task_id: int
 
+class WalletDebitRequest(BaseModel):
+    amount: float
+    description: str
+    reference_id: Optional[str] = None
+
 # ─── WALLET ──────────────────────────────────────────────────
 class WalletOut(BaseModel):
     balance: float

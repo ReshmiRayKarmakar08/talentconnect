@@ -4,7 +4,7 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut, PaymentDemoOut, WalletPaymentRequest
+from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut, PaymentDemoOut, WalletPaymentRequest, WalletDebitRequest
 from app.services.payment_service import (
     create_payment_order,
     get_transactions,
@@ -12,6 +12,7 @@ from app.services.payment_service import (
     payments_enabled,
     verify_payment,
     wallet_pay,
+    wallet_debit,
 )
 from app.services import task_service, user_service
 from app.models.models import TaskStatus
@@ -181,3 +182,22 @@ async def transactions(
     db: AsyncSession = Depends(get_db),
 ):
     return await get_transactions(db, current_user.id)
+
+
+@router.post("/wallet-debit", response_model=WalletOut)
+async def debit_wallet(
+    data: WalletDebitRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        wallet = await wallet_debit(
+            db,
+            current_user.id,
+            data.amount,
+            data.description,
+            data.reference_id,
+        )
+        return wallet
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

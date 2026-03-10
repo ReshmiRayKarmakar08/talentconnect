@@ -5,7 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 import secrets
 
-from app.models.models import LearningSession, SessionFeedback, SessionStatus, FraudLog, User
+from app.models.models import LearningSession, SessionFeedback, SessionStatus, FraudLog, User, UserSkill, Wallet, Transaction
 from app.schemas.schemas import SessionCreate, SessionFeedbackCreate
 
 
@@ -112,8 +112,42 @@ async def cancel_session(
 
 async def complete_session(db: AsyncSession, session_id: int) -> Optional[LearningSession]:
     session = await get_session_by_id(db, session_id)
-    if session:
+    if session and session.status != SessionStatus.completed:
         session.status = SessionStatus.completed
+        # Credit mentor wallet based on hourly rate (demo wallet transfer)
+        user_skill_result = await db.execute(
+            select(UserSkill).where(
+                UserSkill.user_id == session.mentor_id,
+                UserSkill.skill_id == session.skill_id,
+            )
+        )
+        user_skill = user_skill_result.scalar_one_or_none()
+        hourly_rate = user_skill.hourly_rate if user_skill else 0
+        amount = (hourly_rate * session.duration_minutes) / 60 if hourly_rate else 0
+
+        if amount > 0:
+            wallet_result = await db.execute(
+                select(Wallet).where(Wallet.user_id == session.mentor_id)
+            )
+            wallet = wallet_result.scalar_one_or_none()
+            if wallet:
+                existing_txn_result = await db.execute(
+                    select(Transaction).where(
+                        Transaction.wallet_id == wallet.id,
+                        Transaction.reference_id == f"session-credit-{session.id}",
+                    )
+                )
+                existing_txn = existing_txn_result.scalar_one_or_none()
+                if not existing_txn:
+                    wallet.balance += amount
+                    wallet.total_earned += amount
+                    db.add(Transaction(
+                        wallet_id=wallet.id,
+                        amount=amount,
+                        transaction_type="credit",
+                        description=f"Session earnings for session #{session.id}",
+                        reference_id=f"session-credit-{session.id}",
+                    ))
         await db.commit()
     return await get_session_by_id(db, session_id)
 
