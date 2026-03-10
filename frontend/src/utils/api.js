@@ -1,12 +1,36 @@
 import axios from 'axios'
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from './authStorage'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://talentconnect-backend-qu3k.onrender.com/api'
+const RAW_BASE_URL = import.meta.env.VITE_API_BASE_URL
+const normalizeBaseUrl = (value) => {
+  if (!value) return ''
+  let url = value.trim()
+  if (url.startsWith('http://') && window.location.protocol === 'https:') {
+    url = url.replace('http://', 'https://')
+  }
+  return url.replace(/\/+$/, '')
+}
+
+const FALLBACK_BASE_URLS = [
+  normalizeBaseUrl(RAW_BASE_URL),
+  'https://talentconnect-backend-qu3k.onrender.com/api',
+  `${window.location.origin}/api`,
+].filter(Boolean)
+
+let baseIndex = 0
+const API_BASE_URL = FALLBACK_BASE_URLS[baseIndex]
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
+
+function rotateBaseUrl() {
+  if (baseIndex >= FALLBACK_BASE_URLS.length - 1) return false
+  baseIndex += 1
+  api.defaults.baseURL = FALLBACK_BASE_URLS[baseIndex]
+  return true
+}
 
 export function setAuthHeader(token) {
   if (token) {
@@ -58,6 +82,15 @@ api.interceptors.response.use(
   async (error) => {
     const status = error.response?.status
     const detail = error.response?.data?.detail
+    const isNetworkError = !error.response
+
+    if (isNetworkError && !error.config?._retriedBaseUrl) {
+      const switched = rotateBaseUrl()
+      if (switched) {
+        error.config._retriedBaseUrl = true
+        return api(error.config)
+      }
+    }
 
     if (status === 401) {
       const refresh = getRefreshToken()
