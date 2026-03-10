@@ -69,8 +69,8 @@ async def get_current_user(
 
 
 async def get_current_admin(current_user=Depends(get_current_user)):
-    if current_user.email != settings.ADMIN_DEMO_EMAIL or current_user.role != "admin":
-        # force demote non-admin users who somehow have admin role
-        current_user.role = "student"
+    current_email = (current_user.email or "").strip().lower()
+    admin_email = settings.ADMIN_DEMO_EMAIL.strip().lower()
+    if current_email != admin_email or current_user.role != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

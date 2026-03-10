@@ -23,8 +23,9 @@ from app.schemas.schemas import (
     UserProfile,
 )
 from app.services import user_service, task_service, session_service, skill_service
-from app.models.models import User, Task, LearningSession, Payment, FraudLog, SessionFeedback, TaskFeedback, SkillVerification, UserSkill, Skill
+from app.models.models import User, Task, LearningSession, Payment, FraudLog, SessionFeedback, TaskFeedback, SkillVerification, UserSkill, Skill, UserRole
 from sqlalchemy.orm import selectinload
+from datetime import datetime
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -62,7 +63,36 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    return await user_service.get_all_users(db, skip, limit)
+    result = await db.execute(select(User).offset(skip).limit(limit))
+    users = result.scalars().all()
+
+    def safe_email(user: User) -> str:
+        email = (user.email or "").strip()
+        if "@" not in email:
+            return f"deleted-{user.id}@deleted.local"
+        return email
+
+    normalized = []
+    for u in users:
+        email = safe_email(u)
+        username = u.username or f"user_{u.id}"
+        full_name = u.full_name or username
+        role = u.role if u.role in (UserRole.student, UserRole.admin) else UserRole.student
+        created_at = u.created_at or datetime.utcnow()
+        normalized.append(UserPublic(
+            id=u.id,
+            email=email,
+            username=username,
+            full_name=full_name,
+            bio=u.bio,
+            college=u.college,
+            avatar_url=u.avatar_url,
+            role=role,
+            reputation_score=u.reputation_score or 0.0,
+            is_active=bool(u.is_active),
+            created_at=created_at,
+        ))
+    return normalized
 
 
 @router.post("/users/{user_id}/ban")
