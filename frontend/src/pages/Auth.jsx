@@ -161,7 +161,6 @@ export function LoginPage() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Access</span>
-                <span className="text-brand-300">{showAdminAccess ? 'Hide' : 'Show'}</span>
               </div>
               {showAdminAccess && (
                 <div className="mt-3 space-y-1 text-gray-300">
