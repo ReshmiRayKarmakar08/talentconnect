@@ -158,16 +158,15 @@ Interactive docs:
 
 ### Landing Page
 
-![Landing Page](./screenshots/landing-page.png)
+![Landing Page](./.github/screenshots/landing-page.png)
 
 ### Login
 
-![Login](./screenshots/login.png)
+![Login](./.github/screenshots/login.png)
 
 ### Dashboard
 
-![Dashboard](./screenshots/dashboard.png)
-
+![Dashboard](./.github/screenshots/dashboard.png)
 
 ## Roadmap
 
