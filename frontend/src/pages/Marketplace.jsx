@@ -184,6 +184,7 @@ export default function Marketplace() {
   const [viewTask, setViewTask] = useState(null)
   const [loading, setLoading] = useState(true)
   const [payingTaskId, setPayingTaskId] = useState(null)
+  const [demoLoading, setDemoLoading] = useState(false)
 
   const handleAuthFailure = (e, fallbackMessage = 'Failed') => {
     const status = e.response?.status
@@ -209,7 +210,7 @@ export default function Marketplace() {
   const handleAccept = async (task) => {
     try {
       const { data } = await tasksAPI.accept(task.id)
-      setTasks(tasks.map(t => t.id === task.id ? data : t))
+      setTasks(prev => prev.map(t => t.id === task.id ? data : t))
       toast.success('Task accepted!')
     } catch (e) {
       handleAuthFailure(e)
@@ -218,7 +219,7 @@ export default function Marketplace() {
 
   const handleSubmit = async (taskId, notes) => {
     const { data } = await tasksAPI.submit(taskId, { submission_notes: notes })
-    setMyTasks(myTasks.map(t => t.id === taskId ? data : t))
+    setMyTasks(prev => prev.map(t => t.id === taskId ? data : t))
   }
 
   const loadRazorpay = () => {
@@ -258,7 +259,7 @@ export default function Marketplace() {
               razorpay_signature: response.razorpay_signature,
               task_id: task.id,
             })
-            setMyTasks(myTasks.map(t => t.id === task.id ? data : t))
+            setMyTasks(prev => prev.map(t => t.id === task.id ? data : t))
             toast.success('Payment successful. Task marked complete.')
             setViewTask(null)
           } catch (e) {
@@ -280,6 +281,35 @@ export default function Marketplace() {
     }
   }
 
+  const runDemoPayment = async () => {
+    if (demoLoading) return
+    setDemoLoading(true)
+    try {
+      const deadline = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
+      const demoTask = {
+        title: 'Demo payment task',
+        description: 'Razorpay test transaction to verify payment flow and wallet updates.',
+        subject: 'Demo',
+        budget: 1,
+        deadline,
+      }
+
+      const { data: created } = await tasksAPI.create(demoTask)
+      await tasksAPI.accept(created.id)
+      const { data: submitted } = await tasksAPI.submit(created.id, { submission_notes: 'Demo submission' })
+
+      setTasks(prev => [submitted, ...prev.filter(t => t.id !== submitted.id)])
+      setMyTasks(prev => [submitted, ...prev.filter(t => t.id !== submitted.id)])
+
+      toast.success('Demo task created. Opening Razorpay...')
+      await handlePay(submitted)
+    } catch (e) {
+      handleAuthFailure(e, 'Demo payment failed')
+    } finally {
+      setDemoLoading(false)
+    }
+  }
+
   const displayTasks = tab === 'browse' ? tasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase())) : myTasks
 
   return (
@@ -291,6 +321,30 @@ export default function Marketplace() {
         </div>
         <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
           <Plus size={16} /> Post Task
+        </button>
+      </div>
+
+        <div className="card p-5 mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-white">Razorpay Test Mode</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Use Razorpay test keys and a test card to validate payments. This demo creates a ₹1 task, submits it, and opens checkout.
+            </p>
+            <p className="text-xs text-gray-400 mt-2">
+              For a full transfer, use two accounts: one posts the task and pays, the other accepts and submits it.
+            </p>
+            <div className="mt-3 text-xs text-gray-400 space-y-1">
+              <p>Test card: 4111 1111 1111 1111</p>
+              <p>Expiry: Any future date · CVV: 123 · OTP: 123456</p>
+            </div>
+        </div>
+        <button
+          onClick={runDemoPayment}
+          disabled={demoLoading}
+          className="btn-primary inline-flex items-center justify-center gap-2"
+        >
+          {demoLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+          Run Demo Payment
         </button>
       </div>
 
