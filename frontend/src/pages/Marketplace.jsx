@@ -11,6 +11,42 @@ const statusColors = {
   completed: 'badge-gray', disputed: 'badge-red', flagged: 'badge-red',
 }
 
+const DEMO_TASKS = [
+  {
+    id: 'demo-1',
+    title: 'React dashboard polish',
+    description: 'Refine cards and data tables for a student dashboard layout.',
+    subject: 'Web Development',
+    budget: 280,
+    deadline: new Date(Date.now() + 3 * 86400000).toISOString(),
+    status: 'open',
+    is_demo: true,
+    poster: { full_name: 'Demo User' },
+  },
+  {
+    id: 'demo-2',
+    title: 'SQL queries for assignment',
+    description: 'Need joins and aggregations for a database assignment.',
+    subject: 'Database',
+    budget: 190,
+    deadline: new Date(Date.now() + 4 * 86400000).toISOString(),
+    status: 'open',
+    is_demo: true,
+    poster: { full_name: 'Demo User' },
+  },
+  {
+    id: 'demo-3',
+    title: 'Python debugging help',
+    description: 'Fix edge cases in a sorting algorithm and explain complexity.',
+    subject: 'Data Structures',
+    budget: 220,
+    deadline: new Date(Date.now() + 2 * 86400000).toISOString(),
+    status: 'open',
+    is_demo: true,
+    poster: { full_name: 'Demo User' },
+  },
+]
+
 function TaskCard({ task, onAccept, onView, isMyTask }) {
   const isOpen = task.status === 'open'
   const daysLeft = Math.ceil((new Date(task.deadline) - new Date()) / 86400000)
@@ -306,6 +342,8 @@ export default function Marketplace() {
       .then(([all, my]) => { setTasks(all.data); setMyTasks(my.data) })
       .catch((e) => {
         setLoadError(true)
+        setTasks(DEMO_TASKS)
+        setMyTasks([])
         handleAuthFailure(e, 'Failed to load tasks')
       })
       .finally(() => setLoading(false))
@@ -316,6 +354,10 @@ export default function Marketplace() {
   }, [navigate])
 
   const handleAccept = async (task) => {
+    if (task.is_demo || loadError) {
+      toast.error('Backend unavailable. Demo tasks cannot be accepted.')
+      return
+    }
     try {
       const { data } = await tasksAPI.accept(task.id)
       setTasks(prev => prev.map(t => t.id === task.id ? data : t))
@@ -326,17 +368,29 @@ export default function Marketplace() {
   }
 
   const handleSubmit = async (taskId, notes) => {
+    if (loadError) {
+      toast.error('Backend unavailable. Try again later.')
+      return
+    }
     const { data } = await tasksAPI.submit(taskId, { submission_notes: notes })
     setMyTasks(prev => prev.map(t => t.id === taskId ? data : t))
   }
 
   const handleFeedback = async (taskId, feedback) => {
+    if (loadError) {
+      toast.error('Backend unavailable. Try again later.')
+      return
+    }
     const { data } = await tasksAPI.feedback(taskId, feedback)
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
     setMyTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
   }
 
   const handleWalletPay = async (task) => {
+    if (task.is_demo || loadError) {
+      toast.error('Backend unavailable. Demo tasks cannot be paid.')
+      return
+    }
     if (payingTaskId) return
     setPayingTaskId(task.id)
     try {
@@ -396,6 +450,10 @@ export default function Marketplace() {
   }
 
   const handlePay = async (task) => {
+    if (task.is_demo || loadError) {
+      toast.error('Backend unavailable. Demo tasks cannot be paid.')
+      return
+    }
     if (payingTaskId) return
     setPayingTaskId(task.id)
     try {
@@ -415,6 +473,10 @@ export default function Marketplace() {
   }
 
   const runDemoPayment = async () => {
+    if (loadError) {
+      toast.error('Backend unavailable. Enable demo payments on the server.')
+      return
+    }
     if (demoLoading) return
     setDemoLoading(true)
     try {

@@ -359,6 +359,27 @@ async def init_db():
                         description="Welcome bonus",
                         reference_id="welcome_bonus",
                     ))
+                elif wallet.balance < float(settings.INITIAL_WALLET_CREDIT):
+                    topup_ref = f"welcome_bonus_topup_{settings.INITIAL_WALLET_CREDIT}"
+                    topup_result = await session.execute(
+                        select(Transaction).where(
+                            Transaction.wallet_id == wallet.id,
+                            Transaction.reference_id == topup_ref,
+                        )
+                    )
+                    already_topped = topup_result.scalar_one_or_none() is not None
+                    if not already_topped:
+                        diff = float(settings.INITIAL_WALLET_CREDIT) - wallet.balance
+                        if diff > 0:
+                            wallet.balance += diff
+                            wallet.total_earned += diff
+                            session.add(Transaction(
+                                wallet_id=wallet.id,
+                                amount=diff,
+                                transaction_type="credit",
+                                description="Welcome bonus top-up",
+                                reference_id=topup_ref,
+                            ))
 
         await session.commit()
 
