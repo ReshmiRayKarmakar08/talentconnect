@@ -115,11 +115,16 @@ async def get_recommendations(
 ):
     user_skills = await skill_service.get_user_skills(db, current_user.id)
     all_skills = await skill_service.get_all_skills(db)
+    co_graph = await skill_service.get_skill_cooccurrence_graph(db)
 
     user_skill_names = [us.skill.name for us in user_skills]
     all_skill_names = [s.name for s in all_skills]
 
-    recommendations = skill_recommender.recommend(user_skill_names, all_skill_names)
+    recommendations = skill_recommender.recommend(
+        user_skill_names,
+        all_skill_names,
+        co_graph=co_graph,
+    )
     all_skills_map = {s.name.lower(): s for s in all_skills}
 
     result = []

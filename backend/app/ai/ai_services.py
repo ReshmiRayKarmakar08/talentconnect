@@ -90,7 +90,11 @@ class SkillRecommender:
     }
 
     def recommend(
-        self, user_skills: List[str], all_platform_skills: List[str], top_n: int = 5
+        self,
+        user_skills: List[str],
+        all_platform_skills: List[str],
+        top_n: int = 5,
+        co_graph: Optional[Dict[str, Dict[str, float]]] = None,
     ) -> List[Tuple[str, float]]:
         user_skills_lower = [s.lower() for s in user_skills]
         scores = defaultdict(float)
@@ -100,6 +104,13 @@ class SkillRecommender:
             for r in related:
                 if r not in user_skills_lower:
                     scores[r] += 1.0
+
+        if co_graph:
+            for skill in user_skills_lower:
+                related = co_graph.get(skill, {})
+                for r, weight in related.items():
+                    if r not in user_skills_lower:
+                        scores[r] += float(weight)
 
         # Filter to platform skills only
         platform_lower = {s.lower(): s for s in all_platform_skills}

@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from typing import Optional, List
+from typing import Optional, List, Dict
+from collections import defaultdict
 from app.models.models import Skill, UserSkill, SkillVerification, VerificationStatus, SessionFeedback, LearningSession
 from app.schemas.schemas import SkillCreate, UserSkillCreate
 
@@ -186,3 +187,24 @@ async def get_all_skill_verifications(db: AsyncSession, skip: int = 0, limit: in
         .offset(skip).limit(limit)
     )
     return result.scalars().all()
+
+
+async def get_skill_cooccurrence_graph(db: AsyncSession) -> Dict[str, Dict[str, float]]:
+    result = await db.execute(
+        select(UserSkill).options(selectinload(UserSkill.skill))
+    )
+    user_skills = result.scalars().all()
+
+    skills_by_user: Dict[int, set] = defaultdict(set)
+    for us in user_skills:
+        if us.skill and us.skill.name:
+            skills_by_user[us.user_id].add(us.skill.name.lower())
+
+    graph: Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    for skill_set in skills_by_user.values():
+        for left in skill_set:
+            for right in skill_set:
+                if left != right:
+                    graph[left][right] += 1.0
+
+    return {k: dict(v) for k, v in graph.items()}

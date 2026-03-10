@@ -5,7 +5,7 @@ from typing import Optional, List
 from datetime import datetime
 import secrets
 
-from app.models.models import LearningSession, SessionFeedback, SessionStatus, FraudLog, User, UserSkill, Wallet, Transaction
+from app.models.models import LearningSession, SessionFeedback, SessionStatus, FraudLog, User, UserSkill, Wallet, Transaction, Notification
 from app.schemas.schemas import SessionCreate, SessionFeedbackCreate
 
 
@@ -97,14 +97,23 @@ async def cancel_session(
         user.cancellation_count += 1
         # Flag for fraud if cancellations exceed threshold
         if user.cancellation_count >= 3:
+            severity = "medium" if user.cancellation_count < 5 else "high"
             fraud_log = FraudLog(
                 user_id=cancelled_by_id,
                 event_type="repeated_cancellation",
                 details=f"User has cancelled {user.cancellation_count} sessions",
-                severity="medium" if user.cancellation_count < 5 else "high",
+                severity=severity,
             )
             db.add(fraud_log)
-            user.fraud_score = min(user.fraud_score + 0.2, 1.0)
+            user.fraud_score = min(user.fraud_score + (0.15 if severity == "medium" else 0.25), 1.0)
+            user.reputation_score = max((user.reputation_score or 0) - 0.2, 0)
+            db.add(Notification(
+                user_id=cancelled_by_id,
+                title="Session cancellations detected",
+                message="We noticed repeated session cancellations. Continued cancellations may impact your account standing.",
+                notif_type="fraud",
+                extra_metadata={"cancellations": user.cancellation_count, "severity": severity},
+            ))
 
     await db.commit()
     return await get_session_by_id(db, session_id)
