@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, ShoppingBag, Calendar, DollarSign, AlertTriangle, Ban, CheckCircle, Flag, Eye, Loader2 } from 'lucide-react'
+import { Users, ShoppingBag, Calendar, DollarSign, AlertTriangle, Ban, CheckCircle, Flag, Eye, Loader2, Trash2 } from 'lucide-react'
 import { adminAPI } from '../utils/api'
 import toast from 'react-hot-toast'
 
@@ -242,26 +242,32 @@ export default function AdminPanel() {
                       </td>
                       <td className="px-4 py-3 text-gray-300">{u.reputation_score?.toFixed(1)}</td>
                       <td className="px-4 py-3">
-                        {u.role !== 'admin' && (
-                          <div className="flex flex-wrap gap-2">
-                            <button
-                              onClick={() => handleBan(u.id, !u.is_active)}
-                              className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1
-                                ${u.is_active
-                                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
-                                  : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
-                                }`}
-                            >
-                              {u.is_active ? <><Ban size={11} /> Ban</> : <><CheckCircle size={11} /> Unban</>}
-                            </button>
-                            <button
-                              onClick={() => handleUserDetail(u.id)}
-                              className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 border border-white/10 text-gray-300 hover:text-white"
-                            >
-                              <Eye size={11} /> View
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => handleBan(u.id, !u.is_active)}
+                            disabled={u.role === 'admin'}
+                            className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1
+                              ${u.role === 'admin' ? 'opacity-40 cursor-not-allowed border border-white/10 text-gray-500' :
+                                u.is_active
+                                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20'
+                                : 'bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20'
+                              }`}
+                          >
+                            {u.is_active ? <><Ban size={11} /> Ban</> : <><CheckCircle size={11} /> Unban</>}
+                          </button>
+                          <button
+                            onClick={() => handleUserDetail(u.id)}
+                            className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 border border-white/10 text-gray-300 hover:text-white"
+                          >
+                            <Eye size={11} /> View
+                          </button>
+                          <button
+                            disabled
+                            className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 border border-red-500/20 text-red-400/40 opacity-40 cursor-not-allowed"
+                          >
+                            <Trash2 size={11} /> Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
