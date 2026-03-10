@@ -100,6 +100,8 @@ async def delete_user(db: AsyncSession, user_id: int) -> Optional[User]:
     user = await get_user_by_id(db, user_id)
     if not user:
         return None
+    if user.role == "admin" or user.email.lower() == settings.ADMIN_DEMO_EMAIL.lower() or user.username == "admin":
+        return None
     # Soft delete + anonymize to avoid FK issues
     user.is_active = False
     user.email = f"deleted-{user.id}@deleted.local"

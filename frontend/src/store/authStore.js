@@ -30,7 +30,7 @@ const useAuthStore = create((set, get) => ({
     } catch (error) {
       const status = error?.response?.status
 
-      if (status === 401 || status === 403) {
+      if (status === 401 || status === 403 || status === 404) {
         clearTokens()
         setAuthHeader(null)
         setCachedUser(null)

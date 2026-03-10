@@ -83,6 +83,8 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
             admin.role = UserRole.admin
             admin.username = "admin"
             admin.full_name = "Admin"
+            admin.is_active = True
+            admin.is_verified = True
             admin.college = "TalentConnect"
             admin.is_verified = True
             admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
@@ -123,6 +125,13 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
 
     admin = await get_user_by_email(db, settings.ADMIN_DEMO_EMAIL)
     if not admin:
+        admin_result = await db.execute(
+            select(User).where(User.username == "admin")
+        )
+        admin = admin_result.scalar_one_or_none()
+        if admin and admin.email != settings.ADMIN_DEMO_EMAIL:
+            admin.email = settings.ADMIN_DEMO_EMAIL
+    if not admin:
         admin = User(
             email=settings.ADMIN_DEMO_EMAIL,
             username="admin",
@@ -155,6 +164,7 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
         admin.username = "admin"
         admin.full_name = "Admin"
         admin.college = "TalentConnect"
+        admin.is_active = True
         admin.is_verified = True
         admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
 

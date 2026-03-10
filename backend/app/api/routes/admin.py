@@ -94,12 +94,14 @@ async def unban_user(
 async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    _=Depends(get_current_admin),
+    current_admin=Depends(get_current_admin),
 ):
     user = await user_service.get_user_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if user.email == settings.ADMIN_DEMO_EMAIL:
+    if user.id == current_admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete the active admin")
+    if user.email == settings.ADMIN_DEMO_EMAIL or user.username == "admin" or user.role == "admin":
         raise HTTPException(status_code=400, detail="Cannot delete the main admin")
     deleted = await user_service.delete_user(db, user_id)
     if not deleted:

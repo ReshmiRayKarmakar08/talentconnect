@@ -11,10 +11,11 @@ const normalizeBaseUrl = (value) => {
   return url.replace(/\/+$/, '')
 }
 
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
 const FALLBACK_BASE_URLS = [
   normalizeBaseUrl(RAW_BASE_URL),
   'https://talentconnect-backend-qu3k.onrender.com/api',
-  `${window.location.origin}/api`,
+  ...(isLocalhost ? [`${window.location.origin}/api`] : []),
 ].filter(Boolean)
 
 let baseIndex = 0
