@@ -67,8 +67,6 @@ export function LoginPage() {
   const handleAdminLogin = async () => {
     setAdminLoading(true)
     try {
-      setValue('email', adminEmail, { shouldValidate: true })
-      setValue('password', adminPassword, { shouldValidate: true })
       const user = await login(adminEmail, adminPassword)
       toast.success('Admin access granted')
       navigate('/admin', { replace: true })
@@ -165,22 +163,70 @@ export function LoginPage() {
               <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Credentials</p>
               <button
                 type="button"
-                onClick={handleAdminLogin}
+                onClick={() => {
+                  setValue('admin_email', adminEmail, { shouldValidate: true })
+                  setValue('admin_password', adminPassword, { shouldValidate: true })
+                }}
                 className="mt-2 text-left text-brand-300 hover:text-white transition-colors"
               >
                 {adminEmail}
               </button>
               <p className="mt-1 text-gray-400">Password: {adminPassword}</p>
             </div>
-            <button
-              onClick={handleAdminLogin}
-              disabled={adminLoading}
-              className="btn-primary mt-4 w-full flex items-center justify-center gap-2"
-              type="button"
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                const email = document.querySelector('input[name="admin_email"]')?.value || adminEmail
+                const password = document.querySelector('input[name="admin_password"]')?.value || adminPassword
+                setAdminLoading(true)
+                login(email, password)
+                  .then(() => {
+                    toast.success('Admin access granted')
+                    navigate('/admin', { replace: true })
+                  })
+                  .catch((e) => {
+                    toast.error(e.response?.data?.detail || 'Admin login failed')
+                  })
+                  .finally(() => setAdminLoading(false))
+              }}
+              className="mt-4 space-y-4"
             >
-              {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-              Login as Admin
-            </button>
+              <div>
+                <label className="label">Email</label>
+                <input
+                  {...register('admin_email')}
+                  type="email"
+                  className="input"
+                  placeholder="admin@talentconnect.com"
+                />
+              </div>
+              <div>
+                <label className="label">Password</label>
+                <div className="relative">
+                  <input
+                    {...register('admin_password')}
+                    type={showPwd ? 'text' : 'password'}
+                    className="input pr-11"
+                    placeholder="Admin password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPwd(!showPwd)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  >
+                    {showPwd ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+              </div>
+              <button
+                disabled={adminLoading}
+                className="btn-primary w-full flex items-center justify-center gap-2"
+                type="submit"
+              >
+                {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+                Login as Admin
+              </button>
+            </form>
           </div>
         )}
       </div>
