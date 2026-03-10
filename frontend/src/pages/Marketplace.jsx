@@ -233,6 +233,39 @@ export default function Marketplace() {
     })
   }
 
+  const openCheckout = async ({ taskId, taskTitle, order }) => {
+    const options = {
+      key: order.key_id,
+      amount: order.amount,
+      currency: order.currency,
+      name: 'TalentConnect',
+      description: `Payment for task: ${taskTitle}`,
+      order_id: order.order_id,
+      handler: async (response) => {
+        try {
+          const { data } = await paymentsAPI.verify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            task_id: taskId,
+          })
+          setMyTasks(prev => prev.map(t => t.id === taskId ? data : t))
+          toast.success('Payment successful. Task marked complete.')
+          setViewTask(null)
+        } catch (e) {
+          toast.error(e.response?.data?.detail || 'Payment verification failed')
+        }
+      },
+      theme: { color: '#4f52e5' },
+    }
+
+    const rz = new window.Razorpay(options)
+    rz.on('payment.failed', () => {
+      toast.error('Payment failed or cancelled')
+    })
+    rz.open()
+  }
+
   const handlePay = async (task) => {
     if (payingTaskId) return
     setPayingTaskId(task.id)
@@ -244,36 +277,7 @@ export default function Marketplace() {
       }
 
       const { data: order } = await paymentsAPI.createOrder({ task_id: task.id })
-      const options = {
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'TalentConnect',
-        description: `Payment for task: ${task.title}`,
-        order_id: order.order_id,
-        handler: async (response) => {
-          try {
-            const { data } = await paymentsAPI.verify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              task_id: task.id,
-            })
-            setMyTasks(prev => prev.map(t => t.id === task.id ? data : t))
-            toast.success('Payment successful. Task marked complete.')
-            setViewTask(null)
-          } catch (e) {
-            toast.error(e.response?.data?.detail || 'Payment verification failed')
-          }
-        },
-        theme: { color: '#4f52e5' },
-      }
-
-      const rz = new window.Razorpay(options)
-      rz.on('payment.failed', () => {
-        toast.error('Payment failed or cancelled')
-      })
-      rz.open()
+      await openCheckout({ taskId: task.id, taskTitle: task.title, order })
     } catch (e) {
       handleAuthFailure(e, 'Payment failed')
     } finally {
@@ -285,24 +289,19 @@ export default function Marketplace() {
     if (demoLoading) return
     setDemoLoading(true)
     try {
-      const deadline = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString()
-      const demoTask = {
-        title: 'Demo payment task',
-        description: 'Razorpay test transaction to verify payment flow and wallet updates.',
-        subject: 'Demo',
-        budget: 1,
-        deadline,
+      const loaded = await loadRazorpay()
+      if (!loaded) {
+        toast.error('Failed to load Razorpay')
+        return
       }
 
-      const { data: created } = await tasksAPI.create(demoTask)
-      await tasksAPI.accept(created.id)
-      const { data: submitted } = await tasksAPI.submit(created.id, { submission_notes: 'Demo submission' })
-
-      setTasks(prev => [submitted, ...prev.filter(t => t.id !== submitted.id)])
-      setMyTasks(prev => [submitted, ...prev.filter(t => t.id !== submitted.id)])
-
+      const { data: demo } = await paymentsAPI.demoOrder()
       toast.success('Demo task created. Opening Razorpay...')
-      await handlePay(submitted)
+      await openCheckout({ taskId: demo.task_id, taskTitle: demo.task_title, order: demo })
+
+      const [all, mine] = await Promise.all([tasksAPI.list(), tasksAPI.my()])
+      setTasks(all.data)
+      setMyTasks(mine.data)
     } catch (e) {
       handleAuthFailure(e, 'Demo payment failed')
     } finally {

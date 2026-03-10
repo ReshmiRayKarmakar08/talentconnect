@@ -4,7 +4,7 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut
+from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut, PaymentDemoOut
 from app.services.payment_service import (
     create_payment_order,
     get_transactions,
@@ -12,8 +12,11 @@ from app.services.payment_service import (
     payments_enabled,
     verify_payment,
 )
-from app.services import task_service
+from app.services import task_service, user_service
 from app.models.models import TaskStatus
+from app.core.config import settings
+from app.schemas.schemas import TaskCreate, UserRegister
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -23,6 +26,14 @@ def ensure_payments_enabled():
         raise HTTPException(
             status_code=503,
             detail="Payments are not enabled in this deployment",
+        )
+
+
+def ensure_demo_enabled():
+    if not settings.DEMO_MODE:
+        raise HTTPException(
+            status_code=403,
+            detail="Demo payments are disabled in this deployment",
         )
 
 
@@ -44,6 +55,60 @@ async def create_order(
         return await create_payment_order(db, data.task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/demo", response_model=PaymentDemoOut)
+async def demo_order(
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ensure_payments_enabled()
+    ensure_demo_enabled()
+
+    demo_email = "demo-acceptor@talentconnect.local"
+    demo_username = "demo_acceptor"
+
+    demo_user = await user_service.get_user_by_email(db, demo_email)
+    if not demo_user:
+        demo_user = await user_service.create_user(
+            db,
+            UserRegister(
+                email=demo_email,
+                username=demo_username,
+                full_name="Demo Acceptor",
+                password="DemoPassword123",
+                college="TalentConnect Demo",
+            ),
+        )
+
+    demo_task = await task_service.create_task(
+        db,
+        current_user.id,
+        TaskCreate(
+            title="Demo payment task",
+            description="Razorpay test transaction to verify payment flow and wallet updates.",
+            subject="Demo",
+            budget=1,
+            deadline=datetime.utcnow() + timedelta(days=2),
+        ),
+    )
+
+    demo_task.acceptor_id = demo_user.id
+    demo_task.status = TaskStatus.assigned
+    await db.commit()
+    await db.refresh(demo_task)
+
+    demo_task = await task_service.submit_task(db, demo_task.id, "", "Demo submission")
+
+    order = await create_payment_order(db, demo_task.id)
+    return PaymentDemoOut(
+        order_id=order.order_id,
+        amount=order.amount,
+        currency=order.currency,
+        key_id=order.key_id,
+        task_id=demo_task.id,
+        task_title=demo_task.title,
+    )
 
 
 @router.post("/verify", response_model=TaskOut)

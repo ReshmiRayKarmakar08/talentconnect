@@ -205,6 +205,10 @@ class PaymentOrderOut(BaseModel):
     currency: str
     key_id: str
 
+class PaymentDemoOut(PaymentOrderOut):
+    task_id: int
+    task_title: str
+
 class PaymentVerify(BaseModel):
     razorpay_order_id: str
     razorpay_payment_id: str

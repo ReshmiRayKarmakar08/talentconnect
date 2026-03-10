@@ -130,6 +130,7 @@ export const tasksAPI = {
 
 export const paymentsAPI = {
   createOrder:   (d) => api.post('/payments/order', d),
+  demoOrder:     ()  => api.post('/payments/demo'),
   verify:        (d) => api.post('/payments/verify', d),
   wallet:        ()  => api.get('/payments/wallet'),
   transactions:  ()  => api.get('/payments/transactions'),
