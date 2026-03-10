@@ -47,6 +47,7 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
   const [adminLoading, setAdminLoading] = useState(false)
+  const [mode, setMode] = useState('user')
   const adminEmail = 'admin@talentconnect.com'
   const adminPassword = 'Admin@12345'
 
@@ -80,9 +81,31 @@ export function LoginPage() {
 
   return (
     <AuthLayout title="Welcome back" subtitle="Sign in to your TalentConnect account" withCard={false}>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="card p-8">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="card p-6 max-w-md mx-auto">
+        <div className="flex items-center gap-2 p-1 rounded-full border border-white/10 bg-white/5">
+          <button
+            type="button"
+            onClick={() => setMode('user')}
+            className={`flex-1 text-xs font-semibold py-2 rounded-full transition-colors ${
+              mode === 'user' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            User
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('admin')}
+            className={`flex-1 text-xs font-semibold py-2 rounded-full transition-colors ${
+              mode === 'admin' ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            Admin
+          </button>
+        </div>
+
+        {mode === 'user' ? (
+          <div className="mt-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="label">Email</label>
           <input
@@ -118,48 +141,48 @@ export function LoginPage() {
           {loading ? <Loader2 size={16} className="animate-spin" /> : null}
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
-          </form>
+            </form>
 
-          <p className="text-center text-gray-500 text-sm mt-5">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-              Sign up
-            </Link>
-          </p>
-          <p className="text-center text-gray-500 text-sm mt-2">
-            <Link to="/forgot-password" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-              Forgot password?
-            </Link>
-          </p>
-        </div>
-
-        <div className="card p-8 border border-brand-500/20 bg-brand-500/5">
-          <p className="text-sm font-semibold text-white">Admin Access (Demo)</p>
-          <p className="text-xs text-gray-400 mt-2">
-            For demonstration purposes, an administrator account is available to access the System Controller dashboard.
-          </p>
-          <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-gray-300">
-            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Credentials</p>
-            <button
-              type="button"
-              onClick={handleAdminLogin}
-              className="mt-2 text-left text-brand-300 hover:text-white transition-colors"
-            >
-              {adminEmail}
-            </button>
-            <p className="mt-1 text-gray-400">Password: {adminPassword}</p>
-            <p className="mt-2 text-gray-500">Click the email to autofill and sign in.</p>
+            <p className="text-center text-gray-500 text-sm mt-5">
+              Don't have an account?{' '}
+              <Link to="/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+                Sign up
+              </Link>
+            </p>
+            <p className="text-center text-gray-500 text-sm mt-2">
+              <Link to="/forgot-password" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+                Forgot password?
+              </Link>
+            </p>
           </div>
-          <button
-            onClick={handleAdminLogin}
-            disabled={adminLoading}
-            className="btn-primary mt-4 w-full flex items-center justify-center gap-2"
-            type="button"
-          >
-            {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-            Login as Admin
-          </button>
-        </div>
+        ) : (
+          <div className="mt-6">
+            <p className="text-sm font-semibold text-white">Admin Access</p>
+            <p className="text-xs text-gray-400 mt-2">
+              Use the administrator account to access the System Controller dashboard.
+            </p>
+            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-gray-300">
+              <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Credentials</p>
+              <button
+                type="button"
+                onClick={handleAdminLogin}
+                className="mt-2 text-left text-brand-300 hover:text-white transition-colors"
+              >
+                {adminEmail}
+              </button>
+              <p className="mt-1 text-gray-400">Password: {adminPassword}</p>
+            </div>
+            <button
+              onClick={handleAdminLogin}
+              disabled={adminLoading}
+              className="btn-primary mt-4 w-full flex items-center justify-center gap-2"
+              type="button"
+            >
+              {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+              Login as Admin
+            </button>
+          </div>
+        )}
       </div>
     </AuthLayout>
   )
