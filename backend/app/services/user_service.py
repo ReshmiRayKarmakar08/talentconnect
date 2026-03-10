@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
 from typing import Optional, List
-from app.models.models import User, Wallet, Notification, Transaction
+from datetime import datetime
+from app.models.models import User, Wallet, Notification, Transaction, UserRole
 from app.core.config import settings
 from app.schemas.schemas import UserRegister, UserUpdate
 from app.core.security import get_password_hash, verify_password
@@ -46,7 +47,10 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
 
 async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
     result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    user = result.scalar_one_or_none()
+    if user:
+        await _normalize_user_fields(db, user)
+    return user
 
 
 async def get_user_by_username(db: AsyncSession, username: str) -> Optional[User]:
@@ -113,7 +117,34 @@ async def delete_user(db: AsyncSession, user_id: int) -> Optional[User]:
 
 async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 50) -> List[User]:
     result = await db.execute(select(User).offset(skip).limit(limit))
-    return result.scalars().all()
+    users = result.scalars().all()
+    for user in users:
+        await _normalize_user_fields(db, user)
+    return users
+
+
+async def _normalize_user_fields(db: AsyncSession, user: User) -> None:
+    changed = False
+    if not user.full_name:
+        user.full_name = user.username or "User"
+        changed = True
+    if user.reputation_score is None:
+        user.reputation_score = 0.0
+        changed = True
+    if user.fraud_score is None:
+        user.fraud_score = 0.0
+        changed = True
+    if user.cancellation_count is None:
+        user.cancellation_count = 0
+        changed = True
+    if user.created_at is None:
+        user.created_at = datetime.utcnow()
+        changed = True
+    if user.role is None:
+        user.role = UserRole.student
+        changed = True
+    if changed:
+        await db.commit()
 
 
 async def create_notification(
