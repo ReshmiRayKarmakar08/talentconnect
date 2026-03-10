@@ -384,13 +384,14 @@ async def init_db():
         await session.commit()
 
         # Ensure demo admin user exists (avoid duplicate username conflicts)
+        from sqlalchemy import or_
         admin_email = settings.ADMIN_DEMO_EMAIL.lower()
         admin_user = existing_users.get(admin_email)
         if not admin_user:
-            admin_username_result = await session.execute(
-                select(User).where(User.username == "admin")
+            admin_lookup = await session.execute(
+                select(User).where(or_(User.email == settings.ADMIN_DEMO_EMAIL, User.username == "admin"))
             )
-            admin_user = admin_username_result.scalar_one_or_none()
+            admin_user = admin_lookup.scalar_one_or_none()
 
         if not admin_user:
             admin_user = User(
