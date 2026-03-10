@@ -362,9 +362,15 @@ async def init_db():
 
         await session.commit()
 
-        # Ensure demo admin user exists
+        # Ensure demo admin user exists (avoid duplicate username conflicts)
         admin_email = settings.ADMIN_DEMO_EMAIL.lower()
         admin_user = existing_users.get(admin_email)
+        if not admin_user:
+            admin_username_result = await session.execute(
+                select(User).where(User.username == "admin")
+            )
+            admin_user = admin_username_result.scalar_one_or_none()
+
         if not admin_user:
             admin_user = User(
                 email=settings.ADMIN_DEMO_EMAIL,
@@ -392,3 +398,8 @@ async def init_db():
                     description="Welcome bonus",
                     reference_id="welcome_bonus",
                 ))
+        else:
+            # Ensure existing admin has admin role and correct email
+            admin_user.role = UserRole.admin
+            if admin_user.email != settings.ADMIN_DEMO_EMAIL:
+                admin_user.email = settings.ADMIN_DEMO_EMAIL
