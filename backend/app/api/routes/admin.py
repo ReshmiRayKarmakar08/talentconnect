@@ -21,6 +21,7 @@ from app.schemas.schemas import (
     AdminUserDetailOut,
     AdminRiskUserOut,
     UserProfile,
+    SkillOut,
 )
 from app.services import user_service, task_service, session_service, skill_service
 from app.models.models import User, Task, LearningSession, Payment, FraudLog, SessionFeedback, TaskFeedback, SkillVerification, UserSkill, Skill, UserRole
@@ -28,6 +29,40 @@ from sqlalchemy.orm import selectinload
 from datetime import datetime
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+def _safe_email(email: str, user_id: int) -> str:
+    value = (email or "").strip()
+    if "@" not in value:
+        return f"deleted-{user_id}@deleted.local"
+    return value
+
+
+def _user_public_from_user(user: User) -> UserPublic:
+    role = user.role if user.role in (UserRole.student, UserRole.admin) else UserRole.student
+    return UserPublic(
+        id=user.id,
+        email=_safe_email(user.email, user.id),
+        username=user.username or f"user_{user.id}",
+        full_name=user.full_name or user.username or f"user_{user.id}",
+        bio=user.bio,
+        college=user.college,
+        avatar_url=user.avatar_url,
+        role=role,
+        reputation_score=user.reputation_score or 0.0,
+        is_active=bool(user.is_active),
+        created_at=user.created_at or datetime.utcnow(),
+    )
+
+
+def _skill_out_from_skill(skill: Skill) -> SkillOut:
+    return SkillOut(
+        id=skill.id,
+        name=skill.name,
+        category=skill.category,
+        description=skill.description,
+        tags=skill.tags,
+    )
 
 
 @router.get("/stats", response_model=PlatformStats)
@@ -63,63 +98,9 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    result = await db.execute(
-        select(
-            User.id,
-            User.email,
-            User.username,
-            User.full_name,
-            User.bio,
-            User.college,
-            User.avatar_url,
-            User.role,
-            User.reputation_score,
-            User.is_active,
-            User.created_at,
-        )
-        .offset(skip)
-        .limit(limit)
-    )
-    rows = result.all()
-
-    normalized: List[UserPublic] = []
-    for (
-        user_id,
-        email,
-        username,
-        full_name,
-        bio,
-        college,
-        avatar_url,
-        role,
-        reputation_score,
-        is_active,
-        created_at,
-    ) in rows:
-        safe_email = (email or "").strip()
-        if "@" not in safe_email:
-            safe_email = f"deleted-{user_id}@deleted.local"
-        safe_username = username or f"user_{user_id}"
-        safe_full_name = full_name or safe_username
-        if isinstance(role, UserRole):
-            safe_role = role
-        else:
-            safe_role = UserRole.admin if str(role).lower() == "admin" else UserRole.student
-        safe_created = created_at or datetime.utcnow()
-        normalized.append(UserPublic(
-            id=user_id,
-            email=safe_email,
-            username=safe_username,
-            full_name=safe_full_name,
-            bio=bio,
-            college=college,
-            avatar_url=avatar_url,
-            role=safe_role,
-            reputation_score=reputation_score or 0.0,
-            is_active=bool(is_active),
-            created_at=safe_created,
-        ))
-    return normalized
+    result = await db.execute(select(User).offset(skip).limit(limit))
+    users = result.scalars().all()
+    return [_user_public_from_user(u) for u in users]
 
 
 @router.post("/users/{user_id}/ban")
@@ -173,7 +154,25 @@ async def list_tasks(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    return await task_service.get_all_tasks(db, skip, limit)
+    tasks = await task_service.get_all_tasks(db, skip, limit)
+    return [
+        TaskOut(
+            id=t.id,
+            poster=_user_public_from_user(t.poster),
+            acceptor=_user_public_from_user(t.acceptor) if t.acceptor else None,
+            title=t.title,
+            description=t.description,
+            subject=t.subject,
+            budget=t.budget,
+            deadline=t.deadline,
+            status=t.status,
+            attachment_url=t.attachment_url,
+            is_flagged=t.is_flagged,
+            feedback=t.feedback,
+            created_at=t.created_at,
+        )
+        for t in tasks
+    ]
 
 
 @router.get("/tasks-detailed", response_model=List[AdminTaskOut])
@@ -195,8 +194,8 @@ async def list_tasks_detailed(
         payment = t.payment
         detailed.append(AdminTaskOut(
             id=t.id,
-            poster=t.poster,
-            acceptor=t.acceptor,
+            poster=_user_public_from_user(t.poster),
+            acceptor=_user_public_from_user(t.acceptor) if t.acceptor else None,
             title=t.title,
             subject=t.subject,
             budget=t.budget,
@@ -218,7 +217,22 @@ async def list_sessions(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    return await session_service.get_all_sessions(db, skip, limit)
+    sessions = await session_service.get_all_sessions(db, skip, limit)
+    return [
+        SessionOut(
+            id=s.id,
+            mentor=_user_public_from_user(s.mentor),
+            learner=_user_public_from_user(s.learner),
+            skill=_skill_out_from_skill(s.skill),
+            status=s.status,
+            scheduled_at=s.scheduled_at,
+            duration_minutes=s.duration_minutes,
+            meet_link=s.meet_link,
+            notes=s.notes,
+            created_at=s.created_at,
+        )
+        for s in sessions
+    ]
 
 
 @router.get("/session-feedback", response_model=List[SessionFeedbackOut])
@@ -274,8 +288,8 @@ async def list_skill_verifications(
                 passed=v.passed,
                 attempted_at=v.attempted_at,
                 created_at=v.created_at,
-                user=v.user_skill.user,
-                skill=v.user_skill.skill,
+                user=_user_public_from_user(v.user_skill.user),
+                skill=_skill_out_from_skill(v.user_skill.skill),
             )
         )
     return response
@@ -332,9 +346,9 @@ async def risk_users(
     users = result.scalars().all()
     return [
         AdminRiskUserOut(
-            user=u,
-            cancellation_count=u.cancellation_count,
-            fraud_score=u.fraud_score,
+            user=_user_public_from_user(u),
+            cancellation_count=u.cancellation_count or 0,
+            fraud_score=u.fraud_score or 0.0,
         )
         for u in users
     ]
@@ -374,18 +388,18 @@ async def user_detail(
 
     user_profile = UserProfile(
         id=user.id,
-        email=user.email,
-        username=user.username,
-        full_name=user.full_name,
+        email=_safe_email(user.email, user.id),
+        username=user.username or f"user_{user.id}",
+        full_name=user.full_name or user.username or f"user_{user.id}",
         bio=user.bio,
         college=user.college,
         avatar_url=user.avatar_url,
-        role=user.role,
-        reputation_score=user.reputation_score,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        cancellation_count=user.cancellation_count,
-        fraud_score=user.fraud_score,
+        role=user.role if user.role in (UserRole.student, UserRole.admin) else UserRole.student,
+        reputation_score=user.reputation_score or 0.0,
+        is_active=bool(user.is_active),
+        created_at=user.created_at or datetime.utcnow(),
+        cancellation_count=user.cancellation_count or 0,
+        fraud_score=user.fraud_score or 0.0,
     )
 
     return AdminUserDetailOut(
