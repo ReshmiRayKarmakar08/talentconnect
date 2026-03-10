@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Users, ShoppingBag, Calendar, DollarSign, AlertTriangle, Ban, CheckCircle, Flag, Eye, Loader2, Trash2 } from 'lucide-react'
+import { Users, ShoppingBag, Calendar, DollarSign, AlertTriangle, Ban, CheckCircle, Flag, Eye, Loader2 } from 'lucide-react'
 import { adminAPI } from '../utils/api'
 import toast from 'react-hot-toast'
 
@@ -29,33 +29,75 @@ export default function AdminPanel() {
   const [fraudLogs, setFraudLogs] = useState([])
   const [tab, setTab] = useState('overview')
   const [loading, setLoading] = useState(true)
+  const [tabLoading, setTabLoading] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [userDetail, setUserDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
 
   useEffect(() => {
-    Promise.all([
-      adminAPI.stats(),
-      adminAPI.users(),
-      adminAPI.tasksDetailed(),
-      adminAPI.sessions(),
-      adminAPI.sessionFeedback(),
-      adminAPI.taskFeedback(),
-      adminAPI.skillVerifications(),
-      adminAPI.riskUsers(),
-      adminAPI.fraudLogs(),
-    ]).then(([s, u, t, sess, sfb, tfb, sv, r, f]) => {
-      setStats(s.data)
-      setUsers(u.data)
-      setTasksDetailed(t.data)
-      setSessions(sess.data)
-      setSessionFeedback(sfb.data)
-      setTaskFeedback(tfb.data)
-      setSkillVerifications(sv.data)
-      setRiskUsers(r.data)
-      setFraudLogs(f.data)
-    }).catch(() => toast.error('Failed to load admin data'))
-    .finally(() => setLoading(false))
+    const loadCore = async () => {
+      setLoading(true)
+      setLoadError(false)
+      try {
+        const [statsRes, usersRes] = await Promise.all([
+          adminAPI.stats(),
+          adminAPI.users(),
+        ])
+        setStats(statsRes.data)
+        setUsers(usersRes.data)
+      } catch {
+        setLoadError(true)
+        toast.error('Failed to load admin data')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadCore()
   }, [])
+
+  useEffect(() => {
+    const loadTabData = async () => {
+      if (loading) return
+      setTabLoading(true)
+      try {
+        if (tab === 'tasks-monitoring' && tasksDetailed.length === 0) {
+          const { data } = await adminAPI.tasksDetailed()
+          setTasksDetailed(data)
+        }
+        if (tab === 'sessions-monitoring' && sessions.length === 0) {
+          const [sess, sv] = await Promise.all([
+            adminAPI.sessions(),
+            adminAPI.skillVerifications(),
+          ])
+          setSessions(sess.data)
+          setSkillVerifications(sv.data)
+        }
+        if (tab === 'fraud-alerts' && (riskUsers.length === 0 && fraudLogs.length === 0)) {
+          const [risk, fraud] = await Promise.all([
+            adminAPI.riskUsers(),
+            adminAPI.fraudLogs(),
+          ])
+          setRiskUsers(risk.data)
+          setFraudLogs(fraud.data)
+        }
+        if (tab === 'feedback-review' && (sessionFeedback.length === 0 && taskFeedback.length === 0)) {
+          const [sfb, tfb] = await Promise.all([
+            adminAPI.sessionFeedback(),
+            adminAPI.taskFeedback(),
+          ])
+          setSessionFeedback(sfb.data)
+          setTaskFeedback(tfb.data)
+        }
+      } catch {
+        toast.error('Failed to load admin data')
+      } finally {
+        setTabLoading(false)
+      }
+    }
+
+    loadTabData()
+  }, [tab, loading])
 
   const handleBan = async (userId, isBanned) => {
     try {
@@ -90,17 +132,6 @@ export default function AdminPanel() {
       toast.error('Failed to load user details')
     } finally {
       setDetailLoading(false)
-    }
-  }
-
-  const handleDeleteUser = async (userId) => {
-    if (!confirm('Delete this user? This will deactivate and anonymize the account.')) return
-    try {
-      await adminAPI.deleteUser(userId)
-      setUsers(users.filter(u => u.id !== userId))
-      toast.success('User deleted')
-    } catch (e) {
-      toast.error(e.response?.data?.detail || 'Failed to delete user')
     }
   }
 
@@ -146,8 +177,18 @@ export default function AdminPanel() {
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-400" size={28} /></div>
+      ) : loadError ? (
+        <div className="card p-8 text-center">
+          <p className="text-gray-500">Failed to load admin data.</p>
+          <button onClick={() => window.location.reload()} className="btn-secondary mt-4">Retry</button>
+        </div>
       ) : (
         <>
+          {tabLoading && (
+            <div className="flex justify-center py-6">
+              <Loader2 className="animate-spin text-brand-400" size={22} />
+            </div>
+          )}
           {tab === 'overview' && stats && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
@@ -218,12 +259,6 @@ export default function AdminPanel() {
                               className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 border border-white/10 text-gray-300 hover:text-white"
                             >
                               <Eye size={11} /> View
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(u.id)}
-                              className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 border border-red-500/30 text-red-300 hover:bg-red-500/10"
-                            >
-                              <Trash2 size={11} /> Delete
                             </button>
                           </div>
                         )}

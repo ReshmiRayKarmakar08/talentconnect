@@ -48,6 +48,7 @@ export function LoginPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [adminLoading, setAdminLoading] = useState(false)
   const [mode, setMode] = useState('user')
+  const [showAdminAccess, setShowAdminAccess] = useState(false)
   const adminEmail = 'admin@talentconnect.com'
   const adminPassword = 'Admin@12345'
 
@@ -146,20 +147,29 @@ export function LoginPage() {
             <p className="text-xs text-gray-400 mt-2">
               Use the administrator account to access the System Controller dashboard.
             </p>
-            <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-gray-300">
-              <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Credentials</p>
-              <button
-                type="button"
-                onClick={() => {
+            <button
+              type="button"
+              onClick={() => {
+                const next = !showAdminAccess
+                setShowAdminAccess(next)
+                if (next) {
                   setValue('admin_email', adminEmail, { shouldValidate: true })
                   setValue('admin_password', adminPassword, { shouldValidate: true })
-                }}
-                className="mt-2 text-left text-brand-300 hover:text-white transition-colors"
-              >
-                {adminEmail}
-              </button>
-              <p className="mt-1 text-gray-400">Password: {adminPassword}</p>
-            </div>
+                }
+              }}
+              className="mt-4 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-xs text-gray-300 hover:text-white transition-colors"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Access</span>
+                <span className="text-brand-300">{showAdminAccess ? 'Hide' : 'Show'}</span>
+              </div>
+              {showAdminAccess && (
+                <div className="mt-3 space-y-1 text-gray-300">
+                  <div>{adminEmail}</div>
+                  <div className="text-gray-400">Password: {adminPassword}</div>
+                </div>
+              )}
+            </button>
             <form
               onSubmit={(e) => {
                 e.preventDefault()
