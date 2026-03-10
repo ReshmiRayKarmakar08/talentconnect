@@ -162,7 +162,8 @@ Interactive docs:
 
 ### Login
 
-![Login](./.github/screenshots/login.png)
+<img width="1920" height="1032" alt="Screenshot 2026-03-10 172315" src="https://github.com/user-attachments/assets/5a53fbb6-62e2-4b6d-bf16-d5bd535f1f83" />
+
 
 ### Dashboard
 
