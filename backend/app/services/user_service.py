@@ -125,6 +125,9 @@ async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 50) -> Lis
 
 async def _normalize_user_fields(db: AsyncSession, user: User) -> None:
     changed = False
+    if not user.email or "@" not in user.email:
+        user.email = f"deleted-{user.id}@deleted.local"
+        changed = True
     if not user.full_name:
         user.full_name = user.username or "User"
         changed = True
