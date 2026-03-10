@@ -7,15 +7,11 @@ from app.core.config import settings
 from app.models.models import Payment, Task, Wallet, Transaction
 from app.schemas.schemas import PaymentOrderOut
 
-try:
-    import razorpay
-except ImportError:
-    razorpay = None
+import razorpay
 
 
 def payments_enabled() -> bool:
     return bool(
-        razorpay
         and settings.RAZORPAY_KEY_ID
         and settings.RAZORPAY_KEY_SECRET
     )
@@ -45,14 +41,25 @@ async def create_payment_order(db: AsyncSession, task_id: int) -> PaymentOrderOu
         "notes": {"task_id": str(task_id)},
     })
 
-    payment = Payment(
-        task_id=task_id,
-        razorpay_order_id=order["id"],
-        amount=task.budget,
-        currency="INR",
-        status="created",
+    payment_result = await db.execute(
+        select(Payment).where(Payment.task_id == task_id)
     )
-    db.add(payment)
+    payment = payment_result.scalar_one_or_none()
+    if payment:
+        payment.razorpay_order_id = order["id"]
+        payment.amount = task.budget
+        payment.currency = "INR"
+        payment.status = "created"
+    else:
+        payment = Payment(
+            task_id=task_id,
+            razorpay_order_id=order["id"],
+            amount=task.budget,
+            currency="INR",
+            status="created",
+        )
+        db.add(payment)
+
     await db.commit()
 
     return PaymentOrderOut(

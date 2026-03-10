@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, Clock, DollarSign, ChevronRight, Loader2, Tag, Filter, CheckCircle2 } from 'lucide-react'
-import { tasksAPI } from '../utils/api'
+import { paymentsAPI, tasksAPI } from '../utils/api'
 import { getAccessToken } from '../utils/authStorage'
 import toast from 'react-hot-toast'
 import useAuthStore from '../store/authStore'
@@ -108,7 +108,7 @@ function CreateTaskModal({ onClose, onCreate }) {
   )
 }
 
-function TaskDetailModal({ task, onClose, onAccept, onSubmit, onComplete, currentUserId }) {
+function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, currentUserId }) {
   const [submitNotes, setSubmitNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const isAcceptor = task.acceptor?.id === currentUserId
@@ -159,9 +159,9 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onComplete, curren
           )}
 
           {task.status === 'submitted' && isPoster && (
-            <button onClick={() => { onComplete(task.id); onClose() }} className="btn-primary w-full inline-flex items-center justify-center gap-2">
+            <button onClick={() => onPay(task)} className="btn-primary w-full inline-flex items-center justify-center gap-2">
               <CheckCircle2 size={16} />
-              Mark Complete and Release Payment
+              Pay and Mark Complete
             </button>
           )}
         </div>
@@ -183,6 +183,7 @@ export default function Marketplace() {
   const [showCreate, setShowCreate] = useState(false)
   const [viewTask, setViewTask] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [payingTaskId, setPayingTaskId] = useState(null)
 
   const handleAuthFailure = (e, fallbackMessage = 'Failed') => {
     const status = e.response?.status
@@ -220,13 +221,62 @@ export default function Marketplace() {
     setMyTasks(myTasks.map(t => t.id === taskId ? data : t))
   }
 
-  const handleComplete = async (taskId) => {
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true)
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.onload = () => resolve(true)
+      script.onerror = () => resolve(false)
+      document.body.appendChild(script)
+    })
+  }
+
+  const handlePay = async (task) => {
+    if (payingTaskId) return
+    setPayingTaskId(task.id)
     try {
-      const { data } = await tasksAPI.complete(taskId)
-      setMyTasks(myTasks.map(t => t.id === taskId ? data : t))
-      toast.success('Task completed! Payment released.')
+      const loaded = await loadRazorpay()
+      if (!loaded) {
+        toast.error('Failed to load Razorpay')
+        return
+      }
+
+      const { data: order } = await paymentsAPI.createOrder({ task_id: task.id })
+      const options = {
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        name: 'TalentConnect',
+        description: `Payment for task: ${task.title}`,
+        order_id: order.order_id,
+        handler: async (response) => {
+          try {
+            const { data } = await paymentsAPI.verify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              task_id: task.id,
+            })
+            setMyTasks(myTasks.map(t => t.id === task.id ? data : t))
+            toast.success('Payment successful. Task marked complete.')
+            setViewTask(null)
+          } catch (e) {
+            toast.error(e.response?.data?.detail || 'Payment verification failed')
+          }
+        },
+        theme: { color: '#4f52e5' },
+      }
+
+      const rz = new window.Razorpay(options)
+      rz.on('payment.failed', () => {
+        toast.error('Payment failed or cancelled')
+      })
+      rz.open()
     } catch (e) {
-      handleAuthFailure(e)
+      handleAuthFailure(e, 'Payment failed')
+    } finally {
+      setPayingTaskId(null)
     }
   }
 
@@ -290,7 +340,7 @@ export default function Marketplace() {
           onClose={() => setViewTask(null)}
           onAccept={handleAccept}
           onSubmit={handleSubmit}
-          onComplete={handleComplete}
+          onPay={handlePay}
           currentUserId={user?.id}
         />
       )}

@@ -4,7 +4,7 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut
+from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut
 from app.services.payment_service import (
     create_payment_order,
     get_transactions,
@@ -12,6 +12,8 @@ from app.services.payment_service import (
     payments_enabled,
     verify_payment,
 )
+from app.services import task_service
+from app.models.models import TaskStatus
 
 router = APIRouter(prefix="/payments", tags=["Payments"])
 
@@ -31,19 +33,33 @@ async def create_order(
     db: AsyncSession = Depends(get_db),
 ):
     ensure_payments_enabled()
+    task = await task_service.get_task_by_id(db, data.task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.poster_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the task poster can pay")
+    if task.status != TaskStatus.submitted:
+        raise HTTPException(status_code=400, detail="Task is not ready for payment")
     try:
         return await create_payment_order(db, data.task_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.post("/verify")
+@router.post("/verify", response_model=TaskOut)
 async def verify(
     data: PaymentVerify,
     current_user=Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     ensure_payments_enabled()
+    task = await task_service.get_task_by_id(db, data.task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.poster_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the task poster can verify payment")
+    if task.status != TaskStatus.submitted:
+        raise HTTPException(status_code=400, detail="Task is not ready for payment")
     success = await verify_payment(
         db,
         data.razorpay_order_id,
@@ -53,7 +69,10 @@ async def verify(
     )
     if not success:
         raise HTTPException(status_code=400, detail="Payment verification failed")
-    return {"message": "Payment verified successfully"}
+    completed = await task_service.complete_task(db, data.task_id)
+    if not completed:
+        raise HTTPException(status_code=400, detail="Unable to complete task after payment")
+    return completed
 
 
 @router.get("/wallet", response_model=WalletOut)

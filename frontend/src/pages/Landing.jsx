@@ -265,6 +265,27 @@ export default function LandingPage() {
             </p>
           </div>
         </section>
+
+        <section className="mx-auto max-w-6xl px-6 pb-16 lg:px-8">
+          <div className="rounded-[28px] border border-white/10 bg-white/[0.03] p-8 shadow-[0_20px_60px_rgba(6,10,24,0.35)]">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-sm font-medium uppercase tracking-[0.24em] text-brand-300">Policies</p>
+                <h2 className="mt-3 text-2xl font-bold text-white font-display">Policy Center</h2>
+                <p className="mt-3 text-sm text-gray-400">
+                  Review our privacy, refund, return, and platform disclosure policies.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 text-sm">
+                <Link to="/privacy" className="btn-secondary px-4 py-2">Privacy</Link>
+                <Link to="/refund-policy" className="btn-secondary px-4 py-2">Refund</Link>
+                <Link to="/return-policy" className="btn-secondary px-4 py-2">Return</Link>
+                <Link to="/disclaimer" className="btn-secondary px-4 py-2">Disclaimer</Link>
+                <Link to="/about" className="btn-secondary px-4 py-2">About & Contact</Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
 
       <footer className="relative border-t border-white/10 bg-[linear-gradient(180deg,#0c1120_0%,#0a0f1b_100%)]">
@@ -293,11 +314,13 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">Company</h3>
+              <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-gray-300">Policies</h3>
               <div className="mt-5 flex flex-col gap-3 text-sm text-gray-400">
-                <a href="#" className="transition-colors hover:text-white">Privacy Policy</a>
-                <a href="#" className="transition-colors hover:text-white">Terms of Service</a>
-                <a href="#" className="transition-colors hover:text-white">Support</a>
+                <Link to="/privacy" className="transition-colors hover:text-white">Privacy Policy</Link>
+                <Link to="/refund-policy" className="transition-colors hover:text-white">Refund Policy</Link>
+                <Link to="/return-policy" className="transition-colors hover:text-white">Return Policy</Link>
+                <Link to="/disclaimer" className="transition-colors hover:text-white">Disclaimer</Link>
+                <Link to="/about" className="transition-colors hover:text-white">About & Contact</Link>
               </div>
             </div>
 
