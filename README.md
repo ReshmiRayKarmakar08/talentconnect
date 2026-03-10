@@ -1,278 +1,190 @@
-# 🌟 TalentConnect
+# <div align="center"><img src="./frontend/public/favicon.svg" alt="TalentConnect logo" width="72" /></div>
 
-> An Intelligent Student Collaboration & Academic Support Platform
+# <div align="center">TalentConnect</div>
 
-TalentConnect is a full-stack web application that enables peer-to-peer learning, skill exchange, task-based academic support, and AI-powered guidance — all within a secure, transparent ecosystem.
+<p align="center">
+  Intelligent student collaboration and academic support platform
+</p>
 
----
+<p align="center">
+  <a href="https://talentconnect-web.vercel.app">Live Frontend</a>
+  ·
+  <a href="https://talentconnect-backend-qu3k.onrender.com/api/docs">API Docs</a>
+  ·
+  <a href="https://talentconnect-backend-qu3k.onrender.com/api/health">Backend Health</a>
+</p>
 
-## 🏗 Tech Stack
+## Overview
 
-| Layer         | Technology                                      |
-|---------------|-------------------------------------------------|
-| **Backend**   | Python · FastAPI · SQLAlchemy (async) · Alembic |
-| **Frontend**  | React 18 · Tailwind CSS · Vite · Zustand        |
-| **Database**  | PostgreSQL 16                                   |
-| **Auth**      | JWT (access + refresh tokens)                   |
-| **Payments**  | Razorpay API                                    |
-| **AI/ML**     | Scikit-learn · Cosine Similarity · Co-occurrence |
-| **Cache**     | Redis (Celery tasks)                            |
-| **DevOps**    | Docker · Docker Compose                         |
+TalentConnect is a full-stack platform for peer learning, skill exchange, academic task collaboration, session booking, and AI-assisted guidance. Students can build reputation through verified skills, connect with mentors, and manage collaborative academic work from a single dashboard.
 
----
+## Core Features
 
-## 📁 Project Structure
+- Skill exchange between students who want to teach and learn from each other
+- Learning session booking with peer mentors
+- Task marketplace for academic help and collaboration
+- Wallet and transaction tracking
+- AI assistant for study guidance and recommendations
+- Admin controls for platform monitoring and moderation
 
-```
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 18, Vite, Tailwind CSS, Zustand |
+| Backend | FastAPI, SQLAlchemy Async, Pydantic |
+| Database | PostgreSQL |
+| Authentication | JWT access and refresh tokens |
+| AI/ML | scikit-learn, cosine similarity, recommendation logic |
+| Deployment | Vercel frontend, Render backend |
+
+## Project Structure
+
+```text
 talentconnect/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py               # FastAPI app entry point
-│   │   ├── core/
-│   │   │   ├── config.py         # Settings (pydantic-settings)
-│   │   │   └── security.py       # JWT, password hashing, guards
-│   │   ├── db/
-│   │   │   └── session.py        # Async SQLAlchemy engine + session
-│   │   ├── models/
-│   │   │   └── models.py         # All SQLAlchemy ORM models
-│   │   ├── schemas/
-│   │   │   └── schemas.py        # Pydantic request/response schemas
-│   │   ├── services/
-│   │   │   ├── user_service.py   # User CRUD + notifications
-│   │   │   ├── skill_service.py  # Skills + verification
-│   │   │   ├── session_service.py# Learning sessions
-│   │   │   ├── task_service.py   # Task marketplace
-│   │   │   └── payment_service.py# Razorpay + wallet
+│   │   ├── api/routes/
 │   │   ├── ai/
-│   │   │   └── ai_services.py    # Skill matching, recommendations,
-│   │   │                         # fraud detection, quiz gen, chatbot
-│   │   └── api/routes/
-│   │       ├── auth.py           # POST /auth/register, /login, /refresh
-│   │       ├── users.py          # GET/PATCH /users
-│   │       ├── skills.py         # Skill exchange + verification
-│   │       ├── sessions.py       # Learning session management
-│   │       ├── tasks.py          # Task marketplace
-│   │       ├── payments.py       # Razorpay orders + wallet
-│   │       ├── ai.py             # Chatbot + fraud check
-│   │       └── admin.py          # System controller (admin only)
+│   │   ├── core/
+│   │   ├── db/
+│   │   ├── models/
+│   │   ├── schemas/
+│   │   └── services/
 │   ├── requirements.txt
-│   ├── Dockerfile
 │   └── .env.example
-│
 ├── frontend/
+│   ├── public/
 │   ├── src/
-│   │   ├── main.jsx              # React entry point
-│   │   ├── App.jsx               # Router + protected routes
-│   │   ├── store/
-│   │   │   └── authStore.js      # Zustand auth state
-│   │   ├── utils/
-│   │   │   └── api.js            # Axios instance + all API helpers
-│   │   ├── components/layout/
-│   │   │   ├── Sidebar.jsx       # Navigation sidebar
-│   │   │   └── AppLayout.jsx     # Main layout wrapper
+│   │   ├── components/
 │   │   ├── pages/
-│   │   │   ├── Auth.jsx          # Login + Register
-│   │   │   ├── Dashboard.jsx     # Home dashboard
-│   │   │   ├── Skills.jsx        # Skill exchange + verification
-│   │   │   ├── Marketplace.jsx   # Task marketplace
-│   │   │   ├── Sessions.jsx      # Learning sessions
-│   │   │   ├── Wallet.jsx        # Wallet + transactions
-│   │   │   ├── AIAssistant.jsx   # AI chatbot
-│   │   │   └── Admin.jsx         # System controller panel
-│   │   └── styles/
-│   │       └── globals.css       # Tailwind + custom design tokens
+│   │   ├── store/
+│   │   ├── styles/
+│   │   └── utils/
 │   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── Dockerfile
-│
+│   └── vercel.json
 └── docker-compose.yml
 ```
 
----
+## Local Setup
 
-## 🚀 Getting Started
+### Backend
 
-This project can be deployed with **Vercel** for the frontend and **Render** for the backend.
-
-### Frontend on Vercel
-
-Use these settings when importing the repo into Vercel:
-
-- Framework Preset: `Vite`
-- Root Directory: `frontend`
-- Build Command: `npm run build`
-- Output Directory: `dist`
-
-Set this environment variable in Vercel before deploying:
-
-```env
-VITE_API_BASE_URL=https://your-backend-domain/api
-```
-
-This repo includes [`frontend/vercel.json`](/d:/Desktop/talentconnect/frontend/vercel.json) so direct refreshes on routes like `/dashboard` and `/skills` resolve correctly in Vercel.
-
-### Option 1: Docker Compose (Recommended)
-
-```bash
-# 1. Clone and enter project
-cd talentconnect
-
-# 2. Copy and configure backend env
-cp backend/.env.example backend/.env
-# Edit backend/.env with your API keys
-
-# 3. Start everything
-docker compose up --build
-
-# App runs at:
-# Frontend → http://localhost:5173
-# Backend API → http://localhost:8000/api/docs
-```
-
-### Option 2: Manual Setup
-
-**Backend:**
 ```bash
 cd backend
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
+venv\Scripts\activate
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your PostgreSQL URL and API keys
-
-# Run (auto-creates tables on startup)
 uvicorn app.main:app --reload --port 8000
 ```
 
-**Frontend:**
+### Frontend
+
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-**PostgreSQL:**
-```bash
-# Create database
-psql -U postgres -c "CREATE DATABASE talentconnect;"
-```
+### Database
 
----
+Create a PostgreSQL database and point the backend environment variables to it.
 
-## 🔑 Environment Variables
+## Environment Variables
+
+Example backend configuration:
 
 ```env
-# backend/.env
-
+APP_NAME=TalentConnect
+APP_ENV=development
+SECRET_KEY=your-secret-key
 DATABASE_URL=postgresql+asyncpg://postgres:password@localhost:5432/talentconnect
-SECRET_KEY=your-super-secret-key
-RAZORPAY_KEY_ID=rzp_test_xxxx
-RAZORPAY_KEY_SECRET=xxxx
-OPENAI_API_KEY=sk-xxxx          # Optional (for enhanced chatbot)
-FRONTEND_URL=http://localhost:5173
+SYNC_DATABASE_URL=postgresql://postgres:password@localhost:5432/talentconnect
+FRONTEND_URL=https://talentconnect-web.vercel.app
 ```
 
----
+Frontend production configuration:
 
-## 📡 API Endpoints
-
-| Method | Endpoint                          | Description                     |
-|--------|-----------------------------------|---------------------------------|
-| POST   | `/api/auth/register`              | Register new student            |
-| POST   | `/api/auth/login`                 | Get JWT tokens                  |
-| GET    | `/api/auth/me`                    | Current user info               |
-| GET    | `/api/skills/`                    | List all skills                 |
-| POST   | `/api/skills/my`                  | Add skill to profile            |
-| GET    | `/api/skills/mentors/{skill_id}`  | AI-ranked mentors for skill     |
-| GET    | `/api/skills/verify/{id}/quiz`    | Get verification quiz           |
-| POST   | `/api/skills/verify/submit`       | Submit quiz answers             |
-| GET    | `/api/skills/recommendations`     | AI skill recommendations        |
-| POST   | `/api/sessions/`                  | Book learning session           |
-| POST   | `/api/sessions/{id}/confirm`      | Mentor confirms session         |
-| POST   | `/api/sessions/{id}/complete`     | Mark session complete           |
-| POST   | `/api/sessions/{id}/feedback`     | Learner leaves rating/review    |
-| GET    | `/api/tasks/`                     | Browse open tasks               |
-| POST   | `/api/tasks/`                     | Post a new task                 |
-| POST   | `/api/tasks/{id}/accept`          | Accept a task                   |
-| POST   | `/api/tasks/{id}/complete`        | Release payment                 |
-| POST   | `/api/payments/order`             | Create Razorpay order           |
-| POST   | `/api/payments/verify`            | Verify payment signature        |
-| POST   | `/api/ai/chat`                    | AI chatbot message              |
-| GET    | `/api/admin/stats`                | Platform statistics (admin)     |
-| POST   | `/api/admin/users/{id}/ban`       | Ban user (admin)                |
-
-Full interactive docs: **http://localhost:8000/api/docs**
-
----
-
-## 🤖 AI Features
-
-| Feature | Implementation |
-|---------|---------------|
-| **Smart Skill Matching** | Cosine similarity on skill tag vectors |
-| **Skill Recommendations** | Co-occurrence graph analysis |
-| **Fraud Detection** | Behavioral analytics (cancellation rate, reputation score) |
-| **Skill Verification** | Auto-generated quizzes per skill (70% pass threshold) |
-| **AI Chatbot** | Rule-based NLP with roadmaps for DSA, Web Dev, ML, Flutter |
-
----
-
-## 👤 User Roles
-
-| Role | Permissions |
-|------|------------|
-| **Student** | List skills, book sessions, post/accept tasks, use chatbot |
-| **Admin** | All student permissions + ban users, flag tasks, view fraud logs, platform stats |
-
-To create an admin user, update the `role` field in the database directly:
-```sql
-UPDATE users SET role = 'admin' WHERE email = 'admin@example.com';
+```env
+VITE_API_BASE_URL=https://talentconnect-backend-qu3k.onrender.com/api
 ```
 
----
+## Deployment
 
-## 🗄 Database Models
+### Frontend on Vercel
 
-- `users` – Profiles, roles, reputation, fraud score
-- `skills` – Skill catalog with categories and tags
-- `user_skills` – Skills claimed by users with verification status
-- `skill_verifications` – Quiz questions, answers, scores
-- `learning_sessions` – Booked sessions with meet links
-- `session_feedbacks` – Ratings and reviews per session
-- `tasks` – Task marketplace listings
-- `task_feedbacks` – Task completion ratings
-- `payments` – Razorpay order/payment records
-- `wallets` – Per-user balance and totals
-- `transactions` – Credit/debit ledger
-- `notifications` – In-app notification system
-- `fraud_logs` – Behavioral anomaly records
+- Framework Preset: `Vite`
+- Root Directory: `frontend`
+- Build Command: `npm run build`
+- Output Directory: `dist`
 
----
+Required environment variable:
 
-## 📸 Screenshots
-> Frontend runs on dark mode with a custom deep-navy + indigo design system
+```env
+VITE_API_BASE_URL=https://talentconnect-backend-qu3k.onrender.com/api
+```
 
-- **Dashboard** — Stats, session summary, AI recommendations
-- **Skills Exchange** — Browse skills by category, view AI-ranked mentors, verification quiz
-- **Task Marketplace** — Post/accept tasks with secure payment flow
-- **Sessions** — Confirm, cancel, complete with Google Meet links
-- **AI Assistant** — Conversational learning guidance with suggested prompts
-- **Admin Panel** — User management, task flagging, fraud log review
+### Backend on Render
 
----
+- Service Type: Web Service
+- Root Directory: `backend`
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
-## 🛣 Roadmap
+Required backend environment variable:
 
-- [ ] WebSocket real-time notifications
-- [ ] File upload for task submissions (S3/Cloudinary)
-- [ ] Google Calendar integration for session scheduling
-- [ ] Email notifications via SMTP
-- [ ] OpenAI-powered chatbot upgrade
-- [ ] Mobile app (React Native)
+```env
+FRONTEND_URL=https://talentconnect-web.vercel.app
+```
+
+## API Surface
+
+Main route groups:
+
+- `/api/auth`
+- `/api/users`
+- `/api/skills`
+- `/api/sessions`
+- `/api/tasks`
+- `/api/payments`
+- `/api/ai`
+- `/api/admin`
+
+Interactive docs:
+
+- `https://talentconnect-backend-qu3k.onrender.com/api/docs`
+
+## Screenshots
+
+Add your platform screenshots in this section.
+
+Suggested slots:
+
+```md
+### Landing Page
+![Landing Page](./screenshots/landing-page.png)
+
+### Dashboard
+![Dashboard](./screenshots/dashboard.png)
+
+### Skills
+![Skills](./screenshots/skills.png)
+
+### Marketplace
+![Marketplace](./screenshots/marketplace.png)
+
+### Sessions
+![Sessions](./screenshots/sessions.png)
+
+### AI Assistant
+![AI Assistant](./screenshots/ai-assistant.png)
+```
+
+## Roadmap
+
+- Real-time notifications
+- File uploads for task submissions
+- Calendar integration
+- Email notifications
+- stronger AI assistant capabilities
+- mobile app support
