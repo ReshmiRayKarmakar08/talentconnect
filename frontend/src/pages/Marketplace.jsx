@@ -428,21 +428,6 @@ export default function Marketplace() {
         </button>
       </div>
 
-        <div className="card p-5 mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-white">Razorpay Test Mode</p>
-            <p className="text-xs text-gray-400 mt-1">
-              Use Razorpay test keys and a test card to validate payments in a safe sandbox.
-            </p>
-            <p className="text-xs text-gray-400 mt-2">
-              For a full transfer, use two accounts: one posts the task and pays, the other accepts and submits it.
-            </p>
-            <div className="mt-3 text-xs text-gray-400 space-y-1">
-              <p>Test card: 4111 1111 1111 1111</p>
-              <p>Expiry: Any future date · CVV: 123 · OTP: 123456</p>
-            </div>
-          </div>
-        </div>
 
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-surface-card border border-surface-border rounded-xl p-1 w-fit mb-6">
