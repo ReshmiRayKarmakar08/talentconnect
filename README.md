@@ -168,9 +168,6 @@ Interactive docs:
 
 ![Dashboard](./screenshots/dashboard.png)
 
-### AI Assistant
-
-![AI Assistant](./screenshots/ai-assistant.png)
 
 ## Roadmap
 
