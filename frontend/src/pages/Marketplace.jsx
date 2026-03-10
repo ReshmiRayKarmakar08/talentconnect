@@ -549,6 +549,12 @@ export default function Marketplace() {
         ))}
       </div>
 
+      {loadError && (
+        <div className="mb-6 rounded-2xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200">
+          Backend is unavailable. Showing demo tasks only.
+        </div>
+      )}
+
       {tab === 'browse' && (
         <div className="relative mb-6">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
@@ -558,15 +564,15 @@ export default function Marketplace() {
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 className="animate-spin text-brand-400" size={28} /></div>
-      ) : loadError ? (
-        <div className="card p-12 text-center">
-          <p className="text-gray-500">Failed to load tasks</p>
-          <button onClick={loadTasks} className="btn-primary mt-4 inline-flex">Retry</button>
-        </div>
       ) : displayTasks.length === 0 ? (
         <div className="card p-12 text-center">
-          <p className="text-gray-500">No tasks found</p>
-          <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 inline-flex">Post a Task</button>
+          <p className="text-gray-500">{loadError ? 'No demo tasks available' : 'No tasks found'}</p>
+          {!loadError && (
+            <button onClick={() => setShowCreate(true)} className="btn-primary mt-4 inline-flex">Post a Task</button>
+          )}
+          {loadError && (
+            <button onClick={loadTasks} className="btn-secondary mt-4 inline-flex">Retry</button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
