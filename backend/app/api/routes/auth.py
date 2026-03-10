@@ -89,6 +89,55 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
     )
 
 
+@router.post("/admin-login", response_model=TokenResponse)
+async def admin_login(db: AsyncSession = Depends(get_db)):
+    from sqlalchemy import or_
+    # Ensure demo admin exists and return tokens (no password needed)
+    admin = await get_user_by_email(db, settings.ADMIN_DEMO_EMAIL)
+    if not admin:
+        result = await db.execute(
+            select(User).where(or_(User.username == "admin", User.email == settings.ADMIN_DEMO_EMAIL))
+        )
+        admin = result.scalar_one_or_none()
+
+    if not admin:
+        admin = User(
+            email=settings.ADMIN_DEMO_EMAIL,
+            username="admin",
+            full_name="TalentConnect Admin",
+            hashed_password=get_password_hash(settings.ADMIN_DEMO_PASSWORD),
+            college="TalentConnect",
+            role=UserRole.admin,
+            is_verified=True,
+        )
+        db.add(admin)
+        await db.flush()
+        wallet = Wallet(
+            user_id=admin.id,
+            balance=float(settings.INITIAL_WALLET_CREDIT or 0),
+            total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+        )
+        db.add(wallet)
+        await db.flush()
+        if settings.INITIAL_WALLET_CREDIT:
+            db.add(Transaction(
+                wallet_id=wallet.id,
+                amount=float(settings.INITIAL_WALLET_CREDIT),
+                transaction_type="credit",
+                description="Welcome bonus",
+                reference_id="welcome_bonus",
+            ))
+    else:
+        admin.role = UserRole.admin
+        admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
+
+    await db.commit()
+    return TokenResponse(
+        access_token=create_access_token({"sub": str(admin.id), "role": admin.role}),
+        refresh_token=create_refresh_token({"sub": str(admin.id)}),
+    )
+
+
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(data: RefreshRequest, db: AsyncSession = Depends(get_db)):
     payload = decode_token(data.refresh_token)

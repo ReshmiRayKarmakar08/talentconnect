@@ -42,7 +42,7 @@ function AuthLayout({ children, title, subtitle, withCard = true }) {
 
 export function LoginPage() {
   const { register, handleSubmit, formState: { errors }, setValue } = useForm()
-  const { login } = useAuthStore()
+  const { login, loginWithTokens } = useAuthStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
@@ -67,7 +67,8 @@ export function LoginPage() {
   const handleAdminLogin = async () => {
     setAdminLoading(true)
     try {
-      const user = await login(adminEmail, adminPassword)
+      const { data } = await authAPI.adminLogin()
+      await loginWithTokens(data)
       toast.success('Admin access granted')
       navigate('/admin', { replace: true })
     } catch (e) {
@@ -176,13 +177,14 @@ export function LoginPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                const email = document.querySelector('input[name="admin_email"]')?.value || adminEmail
-                const password = document.querySelector('input[name="admin_password"]')?.value || adminPassword
                 setAdminLoading(true)
-                login(email, password)
-                  .then(() => {
-                    toast.success('Admin access granted')
-                    navigate('/admin', { replace: true })
+                authAPI.adminLogin()
+                  .then(({ data }) => {
+                    return loginWithTokens(data)
+                      .then(() => {
+                        toast.success('Admin access granted')
+                        navigate('/admin', { replace: true })
+                      })
                   })
                   .catch((e) => {
                     toast.error(e.response?.data?.detail || 'Admin login failed')

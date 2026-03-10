@@ -341,6 +341,13 @@ export default function Marketplace() {
     Promise.all([tasksAPI.list(), tasksAPI.my()])
       .then(([all, my]) => { setTasks(all.data); setMyTasks(my.data) })
       .catch((e) => {
+        if (!e.response) {
+          setLoadError(true)
+          setTasks(DEMO_TASKS)
+          setMyTasks([])
+          setTab('browse')
+          return
+        }
         setLoadError(true)
         setTasks(DEMO_TASKS)
         setMyTasks([])

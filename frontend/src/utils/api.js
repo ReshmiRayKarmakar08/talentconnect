@@ -86,6 +86,7 @@ export default api
 export const authAPI = {
   register:       (d) => api.post('/auth/register', d),
   login:          (d) => api.post('/auth/login', d),
+  adminLogin:     ()  => api.post('/auth/admin-login'),
   me:             ()  => api.get('/auth/me'),
   forgotPassword: (d) => api.post('/auth/forgot-password', d),
 }

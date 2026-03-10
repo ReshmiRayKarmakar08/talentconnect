@@ -59,6 +59,16 @@ const useAuthStore = create((set, get) => ({
     return me.data
   },
 
+  loginWithTokens: async (tokens) => {
+    if (!tokens?.access_token) return null
+    setTokens(tokens.access_token, tokens.refresh_token)
+    setAuthHeader(tokens.access_token)
+    const me = await authAPI.me()
+    set({ user: me.data, restoreError: false })
+    setCachedUser(me.data)
+    return me.data
+  },
+
   register: async (formData) => {
     await authAPI.register(formData)
     const { data } = await authAPI.login({
