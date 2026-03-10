@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import BrandMark from '../components/branding/BrandMark'
 import { authAPI } from '../utils/api'
 
-function AuthLayout({ children, title, subtitle }) {
+function AuthLayout({ children, title, subtitle, withCard = true }) {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-4">
       {/* Ambient background */}
@@ -22,18 +22,26 @@ function AuthLayout({ children, title, subtitle }) {
           <BrandMark />
         </div>
 
-        <div className="card p-8">
-          <h1 className="text-2xl font-bold text-white font-display mb-1">{title}</h1>
-          <p className="text-gray-500 text-sm mb-6">{subtitle}</p>
-          {children}
-        </div>
+        {withCard ? (
+          <div className="card p-8">
+            <h1 className="text-2xl font-bold text-white font-display mb-1">{title}</h1>
+            <p className="text-gray-500 text-sm mb-6">{subtitle}</p>
+            {children}
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-2xl font-bold text-white font-display mb-1 text-center">{title}</h1>
+            <p className="text-gray-500 text-sm mb-6 text-center">{subtitle}</p>
+            {children}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 export function LoginPage() {
-  const { register, handleSubmit, formState: { errors } } = useForm()
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm()
   const { login } = useAuthStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
@@ -55,9 +63,26 @@ export function LoginPage() {
     }
   }
 
+  const handleAdminLogin = async () => {
+    setAdminLoading(true)
+    try {
+      setValue('email', adminEmail, { shouldValidate: true })
+      setValue('password', adminPassword, { shouldValidate: true })
+      const user = await login(adminEmail, adminPassword)
+      toast.success('Admin access granted')
+      navigate('/admin', { replace: true })
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Admin login failed')
+    } finally {
+      setAdminLoading(false)
+    }
+  }
+
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your TalentConnect account">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <AuthLayout title="Welcome back" subtitle="Sign in to your TalentConnect account" withCard={false}>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="card p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="label">Email</label>
           <input
@@ -93,51 +118,49 @@ export function LoginPage() {
           {loading ? <Loader2 size={16} className="animate-spin" /> : null}
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
-      </form>
+          </form>
 
-      <div className="card mt-6 p-5 border border-brand-500/20 bg-brand-500/5">
-        <p className="text-sm font-semibold text-white">Admin Login – Demo Access</p>
-        <p className="text-xs text-gray-400 mt-2">
-          For demonstration purposes, an administrator account is available to access the System Controller dashboard.
-        </p>
-        <p className="text-xs text-brand-300 mt-3">
-          <a href={`mailto:${adminEmail}`} className="hover:text-white transition-colors">
-            {adminEmail}
-          </a>
-        </p>
-        <button
-          onClick={async () => {
-            setAdminLoading(true)
-            try {
-              const user = await login(adminEmail, adminPassword)
-              toast.success('Admin access granted')
-              navigate('/admin', { replace: true })
-            } catch (e) {
-              toast.error(e.response?.data?.detail || 'Admin login failed')
-            } finally {
-              setAdminLoading(false)
-            }
-          }}
-          disabled={adminLoading}
-          className="btn-primary mt-4 w-full flex items-center justify-center gap-2"
-          type="button"
-        >
-          {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
-          Login as Admin
-        </button>
+          <p className="text-center text-gray-500 text-sm mt-5">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+              Sign up
+            </Link>
+          </p>
+          <p className="text-center text-gray-500 text-sm mt-2">
+            <Link to="/forgot-password" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+              Forgot password?
+            </Link>
+          </p>
+        </div>
+
+        <div className="card p-8 border border-brand-500/20 bg-brand-500/5">
+          <p className="text-sm font-semibold text-white">Admin Access (Demo)</p>
+          <p className="text-xs text-gray-400 mt-2">
+            For demonstration purposes, an administrator account is available to access the System Controller dashboard.
+          </p>
+          <div className="mt-4 rounded-xl border border-white/10 bg-white/5 p-4 text-xs text-gray-300">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500">Admin Credentials</p>
+            <button
+              type="button"
+              onClick={handleAdminLogin}
+              className="mt-2 text-left text-brand-300 hover:text-white transition-colors"
+            >
+              {adminEmail}
+            </button>
+            <p className="mt-1 text-gray-400">Password: {adminPassword}</p>
+            <p className="mt-2 text-gray-500">Click the email to autofill and sign in.</p>
+          </div>
+          <button
+            onClick={handleAdminLogin}
+            disabled={adminLoading}
+            className="btn-primary mt-4 w-full flex items-center justify-center gap-2"
+            type="button"
+          >
+            {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+            Login as Admin
+          </button>
+        </div>
       </div>
-
-      <p className="text-center text-gray-500 text-sm mt-5">
-        Don't have an account?{' '}
-        <Link to="/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-          Sign up
-        </Link>
-      </p>
-      <p className="text-center text-gray-500 text-sm mt-2">
-        <Link to="/forgot-password" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-          Forgot password?
-        </Link>
-      </p>
     </AuthLayout>
   )
 }
