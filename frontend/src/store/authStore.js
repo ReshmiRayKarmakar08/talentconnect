@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { authAPI, setAuthHeader } from '../utils/api'
-import { clearTokens, getAccessToken, setTokens } from '../utils/authStorage'
+import { clearTokens, getAccessToken, setTokens, getCachedUser, setCachedUser } from '../utils/authStorage'
 
 const useAuthStore = create((set, get) => ({
   user: null,
@@ -10,25 +10,37 @@ const useAuthStore = create((set, get) => ({
   init: async () => {
     const token = getAccessToken()
     if (!token) {
+      setCachedUser(null)
       set({ user: null, loading: false, restoreError: false })
       return
     }
 
     setAuthHeader(token)
+    const cachedUser = getCachedUser()
+    if (cachedUser) {
+      set({ user: cachedUser, loading: false, restoreError: false })
+    }
     try {
-      const { data } = await authAPI.me()
+      const { data } = await Promise.race([
+        authAPI.me(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 5000)),
+      ])
       set({ user: data, loading: false, restoreError: false })
+      setCachedUser(data)
     } catch (error) {
       const status = error?.response?.status
 
       if (status === 401 || status === 403) {
         clearTokens()
         setAuthHeader(null)
+        setCachedUser(null)
         set({ user: null, loading: false, restoreError: false })
         return
       }
 
-      set({ user: null, loading: false, restoreError: true })
+      if (!cachedUser) {
+        set({ user: null, loading: false, restoreError: true })
+      }
     }
   },
 
@@ -43,6 +55,7 @@ const useAuthStore = create((set, get) => ({
     setAuthHeader(data.access_token)
     const me = await authAPI.me()
     set({ user: me.data, restoreError: false })
+    setCachedUser(me.data)
     return me.data
   },
 
@@ -56,12 +69,14 @@ const useAuthStore = create((set, get) => ({
     setAuthHeader(data.access_token)
     const me = await authAPI.me()
     set({ user: me.data, restoreError: false })
+    setCachedUser(me.data)
     return me.data
   },
 
   logout: () => {
     clearTokens()
     setAuthHeader(null)
+    setCachedUser(null)
     set({ user: null, restoreError: false })
   },
 }))

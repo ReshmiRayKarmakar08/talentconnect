@@ -11,10 +11,7 @@ import razorpay
 
 
 def payments_enabled() -> bool:
-    return bool(
-        and settings.RAZORPAY_KEY_ID
-        and settings.RAZORPAY_KEY_SECRET
-    )
+    return bool(settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET)
 
 
 def get_razorpay_client():

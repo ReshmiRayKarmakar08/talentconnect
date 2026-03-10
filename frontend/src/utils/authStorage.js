@@ -1,5 +1,6 @@
 let accessTokenCache = null
 let refreshTokenCache = null
+let cachedUserCache = null
 
 export function getAccessToken() {
   if (accessTokenCache) return accessTokenCache
@@ -35,4 +36,27 @@ export function clearTokens() {
   refreshTokenCache = null
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
+}
+
+export function getCachedUser() {
+  if (cachedUserCache) return cachedUserCache
+  const raw = localStorage.getItem('cached_user')
+  if (!raw) return null
+  try {
+    cachedUserCache = JSON.parse(raw)
+    return cachedUserCache
+  } catch {
+    localStorage.removeItem('cached_user')
+    cachedUserCache = null
+    return null
+  }
+}
+
+export function setCachedUser(user) {
+  cachedUserCache = user || null
+  if (user) {
+    localStorage.setItem('cached_user', JSON.stringify(user))
+  } else {
+    localStorage.removeItem('cached_user')
+  }
 }
