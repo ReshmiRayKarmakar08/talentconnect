@@ -24,3 +24,4 @@ backend/uvicorn.err.log
 
 .DS_Store
 Thumbs.db
+desktop.ini
