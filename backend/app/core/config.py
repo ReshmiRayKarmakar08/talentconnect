@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
     DEMO_MODE: bool = False
+    INITIAL_WALLET_CREDIT: int = 100
+    ADMIN_DEMO_EMAIL: str = "admin@talentconnect.com"
+    ADMIN_DEMO_PASSWORD: str = "Admin@12345"
 
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""

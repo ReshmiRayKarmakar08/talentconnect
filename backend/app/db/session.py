@@ -101,6 +101,30 @@ SAMPLE_MENTORS = [
     },
 ]
 
+SAMPLE_TASKS = [
+    {
+        "title": "Debug Python sorting assignment",
+        "description": "Need help optimizing a sorting assignment with time complexity explanation.",
+        "subject": "Data Structures",
+        "budget": 150,
+        "deadline_days": 3,
+    },
+    {
+        "title": "Create React landing page",
+        "description": "Build a responsive landing page with Tailwind and reusable components.",
+        "subject": "Web Development",
+        "budget": 300,
+        "deadline_days": 5,
+    },
+    {
+        "title": "SQL query practice set",
+        "description": "Need help writing joins and aggregate queries for a practice set.",
+        "subject": "Database",
+        "budget": 200,
+        "deadline_days": 4,
+    },
+]
+
 
 async def get_db():
     async with AsyncSessionLocal() as session:
@@ -122,7 +146,8 @@ async def init_db():
 
     async with AsyncSessionLocal() as session:
         from app.core.security import get_password_hash
-        from app.models.models import Skill, User, UserSkill, VerificationStatus, SkillLevel, Wallet
+        from app.models.models import Skill, User, UserSkill, VerificationStatus, SkillLevel, Wallet, Transaction, Task, UserRole
+        from datetime import datetime, timedelta
 
         existing_result = await session.execute(select(Skill))
         existing_skills = {skill.name.lower() for skill in existing_result.scalars().all()}
@@ -157,7 +182,21 @@ async def init_db():
                 )
                 session.add(mentor)
                 await session.flush()
-                session.add(Wallet(user_id=mentor.id))
+                wallet = Wallet(
+                    user_id=mentor.id,
+                    balance=float(settings.INITIAL_WALLET_CREDIT or 0),
+                    total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+                )
+                session.add(wallet)
+                await session.flush()
+                if settings.INITIAL_WALLET_CREDIT:
+                    session.add(Transaction(
+                        wallet_id=wallet.id,
+                        amount=float(settings.INITIAL_WALLET_CREDIT),
+                        transaction_type="credit",
+                        description="Welcome bonus",
+                        reference_id="welcome_bonus",
+                    ))
                 existing_users[mentor.email.lower()] = mentor
             else:
                 mentor.reputation_score = mentor_data["reputation_score"]
@@ -187,4 +226,88 @@ async def init_db():
                     )
                 )
 
+        existing_task_result = await session.execute(select(Task))
+        if existing_task_result.scalars().first() is None:
+            poster = next(iter(existing_users.values()), None)
+            if poster:
+                tasks = []
+                for item in SAMPLE_TASKS:
+                    tasks.append(Task(
+                        poster_id=poster.id,
+                        title=item["title"],
+                        description=item["description"],
+                        subject=item["subject"],
+                        budget=item["budget"],
+                        deadline=datetime.utcnow() + timedelta(days=item["deadline_days"]),
+                    ))
+                session.add_all(tasks)
+
+        # Ensure initial wallet credit for users who have no transactions yet
+        if settings.INITIAL_WALLET_CREDIT:
+            for user in existing_users.values():
+                wallet_result = await session.execute(select(Wallet).where(Wallet.user_id == user.id))
+                wallet = wallet_result.scalar_one_or_none()
+                if not wallet:
+                    wallet = Wallet(
+                        user_id=user.id,
+                        balance=float(settings.INITIAL_WALLET_CREDIT),
+                        total_earned=float(settings.INITIAL_WALLET_CREDIT),
+                    )
+                    session.add(wallet)
+                    await session.flush()
+                    session.add(Transaction(
+                        wallet_id=wallet.id,
+                        amount=float(settings.INITIAL_WALLET_CREDIT),
+                        transaction_type="credit",
+                        description="Welcome bonus",
+                        reference_id="welcome_bonus",
+                    ))
+                    continue
+
+                txn_result = await session.execute(
+                    select(Transaction).where(Transaction.wallet_id == wallet.id)
+                )
+                has_txn = txn_result.scalars().first() is not None
+                if not has_txn and wallet.balance == 0:
+                    wallet.balance = float(settings.INITIAL_WALLET_CREDIT)
+                    wallet.total_earned = float(settings.INITIAL_WALLET_CREDIT)
+                    session.add(Transaction(
+                        wallet_id=wallet.id,
+                        amount=float(settings.INITIAL_WALLET_CREDIT),
+                        transaction_type="credit",
+                        description="Welcome bonus",
+                        reference_id="welcome_bonus",
+                    ))
+
         await session.commit()
+
+        # Ensure demo admin user exists
+        admin_email = settings.ADMIN_DEMO_EMAIL.lower()
+        admin_user = existing_users.get(admin_email)
+        if not admin_user:
+            admin_user = User(
+                email=settings.ADMIN_DEMO_EMAIL,
+                username="admin",
+                full_name="TalentConnect Admin",
+                hashed_password=get_password_hash(settings.ADMIN_DEMO_PASSWORD),
+                college="TalentConnect",
+                role=UserRole.admin,
+                is_verified=True,
+            )
+            session.add(admin_user)
+            await session.flush()
+            wallet = Wallet(
+                user_id=admin_user.id,
+                balance=float(settings.INITIAL_WALLET_CREDIT or 0),
+                total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+            )
+            session.add(wallet)
+            await session.flush()
+            if settings.INITIAL_WALLET_CREDIT:
+                session.add(Transaction(
+                    wallet_id=wallet.id,
+                    amount=float(settings.INITIAL_WALLET_CREDIT),
+                    transaction_type="credit",
+                    description="Welcome bonus",
+                    reference_id="welcome_bonus",
+                ))

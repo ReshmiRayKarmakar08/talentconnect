@@ -53,6 +53,12 @@ class UserProfile(UserPublic):
     cancellation_count: int
     fraud_score: float
 
+class AdminRiskUserOut(BaseModel):
+    user: UserPublic
+    cancellation_count: int
+    fraud_score: float
+    model_config = {"from_attributes": True}
+
 # ─── SKILL ───────────────────────────────────────────────────
 class SkillCreate(BaseModel):
     name: str
@@ -196,6 +202,22 @@ class TaskOut(BaseModel):
     created_at: datetime
     model_config = {"from_attributes": True}
 
+class AdminTaskOut(BaseModel):
+    id: int
+    poster: UserPublic
+    acceptor: Optional[UserPublic] = None
+    title: str
+    subject: str
+    budget: float
+    status: TaskStatus
+    is_flagged: bool
+    created_at: datetime
+    payment_status: Optional[str] = None
+    payment_order_id: Optional[str] = None
+    payment_id: Optional[str] = None
+    payment_amount: Optional[float] = None
+    model_config = {"from_attributes": True}
+
 class TaskSubmit(BaseModel):
     submission_notes: Optional[str] = None
 
@@ -229,6 +251,9 @@ class PaymentVerify(BaseModel):
     razorpay_order_id: str
     razorpay_payment_id: str
     razorpay_signature: str
+    task_id: int
+
+class WalletPaymentRequest(BaseModel):
     task_id: int
 
 # ─── WALLET ──────────────────────────────────────────────────
@@ -294,5 +319,19 @@ class PlatformStats(BaseModel):
     active_users: int
     total_sessions: int
     total_tasks: int
+    total_skills: int
+    completed_sessions: int
     total_revenue: float
     fraud_alerts: int
+
+class AdminUserDetailOut(BaseModel):
+    user: UserProfile
+    skills: List[UserSkillOut]
+    tasks_posted: int
+    tasks_accepted: int
+    sessions_as_mentor: int
+    sessions_as_learner: int
+    avg_session_rating: Optional[float] = None
+    avg_task_rating: Optional[float] = None
+    recent_sessions: List[SessionOut] = []
+    recent_tasks: List[TaskOut] = []

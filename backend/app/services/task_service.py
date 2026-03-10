@@ -141,3 +141,12 @@ async def get_all_tasks(db: AsyncSession, skip: int = 0, limit: int = 100) -> Li
         .offset(skip).limit(limit)
     )
     return result.scalars().all()
+
+
+async def delete_task(db: AsyncSession, task_id: int) -> bool:
+    task = await get_task_by_id(db, task_id)
+    if not task:
+        return False
+    await db.delete(task)
+    await db.commit()
+    return True

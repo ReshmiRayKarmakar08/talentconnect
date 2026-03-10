@@ -132,6 +132,7 @@ export const paymentsAPI = {
   createOrder:   (d) => api.post('/payments/order', d),
   demoOrder:     ()  => api.post('/payments/demo'),
   verify:        (d) => api.post('/payments/verify', d),
+  walletPay:     (d) => api.post('/payments/wallet-pay', d),
   wallet:        ()  => api.get('/payments/wallet'),
   transactions:  ()  => api.get('/payments/transactions'),
 }
@@ -144,14 +145,18 @@ export const aiAPI = {
 export const adminAPI = {
   stats:          ()    => api.get('/admin/stats'),
   users:          (p)   => api.get('/admin/users', { params: p }),
+  userDetail:     (id)  => api.get(`/admin/users/${id}/detail`),
   banUser:        (id)  => api.post(`/admin/users/${id}/ban`, {}),
   unbanUser:      (id)  => api.post(`/admin/users/${id}/unban`),
   tasks:          (p)   => api.get('/admin/tasks', { params: p }),
+  tasksDetailed:  (p)   => api.get('/admin/tasks-detailed', { params: p }),
   sessions:       (p)   => api.get('/admin/sessions', { params: p }),
   sessionFeedback:(p)   => api.get('/admin/session-feedback', { params: p }),
   taskFeedback:   (p)   => api.get('/admin/task-feedback', { params: p }),
   skillVerifications: () => api.get('/admin/skill-verifications'),
+  riskUsers:      ()    => api.get('/admin/risk-users'),
   flagTask:       (id, r) => api.post(`/admin/tasks/${id}/flag`, { reason: r }),
+  removeTask:     (id) => api.delete(`/admin/tasks/${id}/remove`),
   fraudLogs:      ()    => api.get('/admin/fraud-logs'),
   reviewFraudLog: (id)  => api.post(`/admin/fraud-logs/${id}/review`),
 }

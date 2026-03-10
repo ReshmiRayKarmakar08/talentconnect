@@ -136,3 +136,31 @@ async def get_transactions(db: AsyncSession, user_id: int):
         .limit(50)
     )
     return result.scalars().all()
+
+
+async def wallet_pay(db: AsyncSession, task_id: int, poster_id: int) -> Task:
+    task_result = await db.execute(select(Task).where(Task.id == task_id))
+    task = task_result.scalar_one_or_none()
+    if not task:
+        raise ValueError("Task not found")
+    if task.poster_id != poster_id:
+        raise PermissionError("Only the task poster can pay")
+    if task.status != "submitted":
+        raise ValueError("Task is not ready for payment")
+
+    wallet = await get_wallet(db, poster_id)
+    if wallet.balance < task.budget:
+        raise ValueError("Insufficient wallet balance")
+
+    wallet.balance -= task.budget
+    wallet.total_spent += task.budget
+    db.add(Transaction(
+        wallet_id=wallet.id,
+        amount=task.budget,
+        transaction_type="debit",
+        description=f"Wallet payment for task: {task.title}",
+        reference_id=str(task_id),
+    ))
+
+    await db.commit()
+    return task

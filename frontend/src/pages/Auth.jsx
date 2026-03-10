@@ -38,6 +38,9 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
+  const [adminLoading, setAdminLoading] = useState(false)
+  const adminEmail = 'admin@talentconnect.com'
+  const adminPassword = 'Admin@12345'
 
   const onSubmit = async (data) => {
     setLoading(true)
@@ -91,6 +94,38 @@ export function LoginPage() {
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
+
+      <div className="card mt-6 p-5 border border-brand-500/20 bg-brand-500/5">
+        <p className="text-sm font-semibold text-white">Admin Login – Demo Access</p>
+        <p className="text-xs text-gray-400 mt-2">
+          For demonstration purposes, an administrator account is available to access the System Controller dashboard.
+        </p>
+        <p className="text-xs text-brand-300 mt-3">
+          <a href={`mailto:${adminEmail}`} className="hover:text-white transition-colors">
+            {adminEmail}
+          </a>
+        </p>
+        <button
+          onClick={async () => {
+            setAdminLoading(true)
+            try {
+              const user = await login(adminEmail, adminPassword)
+              toast.success('Admin access granted')
+              navigate('/admin', { replace: true })
+            } catch (e) {
+              toast.error(e.response?.data?.detail || 'Admin login failed')
+            } finally {
+              setAdminLoading(false)
+            }
+          }}
+          disabled={adminLoading}
+          className="btn-primary mt-4 w-full flex items-center justify-center gap-2"
+          type="button"
+        >
+          {adminLoading ? <Loader2 size={16} className="animate-spin" /> : null}
+          Login as Admin
+        </button>
+      </div>
 
       <p className="text-center text-gray-500 text-sm mt-5">
         Don't have an account?{' '}

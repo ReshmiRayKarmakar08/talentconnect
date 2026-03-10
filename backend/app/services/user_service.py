@@ -1,7 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, update
 from typing import Optional, List
-from app.models.models import User, Wallet, Notification
+from app.models.models import User, Wallet, Notification, Transaction
+from app.core.config import settings
 from app.schemas.schemas import UserRegister, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
@@ -17,9 +18,22 @@ async def create_user(db: AsyncSession, data: UserRegister) -> User:
     db.add(user)
     await db.flush()
 
-    # Create wallet for user
-    wallet = Wallet(user_id=user.id)
+    # Create wallet for user with initial credit
+    wallet = Wallet(
+        user_id=user.id,
+        balance=float(settings.INITIAL_WALLET_CREDIT or 0),
+        total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+    )
     db.add(wallet)
+    await db.flush()
+    if settings.INITIAL_WALLET_CREDIT:
+        db.add(Transaction(
+            wallet_id=wallet.id,
+            amount=float(settings.INITIAL_WALLET_CREDIT),
+            transaction_type="credit",
+            description="Welcome bonus",
+            reference_id="welcome_bonus",
+        ))
     await db.commit()
     await db.refresh(user)
     return user

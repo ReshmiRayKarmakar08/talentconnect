@@ -125,7 +125,7 @@ function CreateTaskModal({ onClose, onCreate }) {
   )
 }
 
-function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onFeedback, currentUserId }) {
+function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onWalletPay, onFeedback, currentUserId }) {
   const [submitNotes, setSubmitNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState({ rating: 5, review: '' })
@@ -200,10 +200,28 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onFeedback,
           )}
 
           {task.status === 'submitted' && isPoster && (
-            <button onClick={() => onPay(task)} className="btn-primary w-full inline-flex items-center justify-center gap-2">
-              <CheckCircle2 size={16} />
-              Pay and Mark Complete
-            </button>
+            <div className="space-y-3">
+              <button onClick={() => onPay(task)} className="btn-primary w-full inline-flex items-center justify-center gap-2">
+                <CheckCircle2 size={16} />
+                Pay via Razorpay
+              </button>
+              <button onClick={() => onWalletPay(task)} className="btn-secondary w-full inline-flex items-center justify-center gap-2">
+                Use Wallet Credit
+              </button>
+              <div className="rounded-xl border border-surface-border bg-surface-hover p-4 text-xs text-gray-400">
+                <p className="text-sm font-semibold text-white">UPI Demo</p>
+                <div className="mt-2 flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-lg border border-white/10 bg-[linear-gradient(135deg,#1a2034,#0f121d)] flex items-center justify-center text-[10px] text-gray-400">
+                    UPI QR
+                  </div>
+                  <div>
+                    <p>UPI ID: talentconnect@upi (demo)</p>
+                    <p>Apps: GPay, PhonePe, Paytm (demo)</p>
+                    <p>Use Razorpay for real test payments.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
           {task.status === 'completed' && isPoster && !task.feedback && (
@@ -308,6 +326,21 @@ export default function Marketplace() {
     const { data } = await tasksAPI.feedback(taskId, feedback)
     setTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
     setMyTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
+  }
+
+  const handleWalletPay = async (task) => {
+    if (payingTaskId) return
+    setPayingTaskId(task.id)
+    try {
+      const { data } = await paymentsAPI.walletPay({ task_id: task.id })
+      setMyTasks(prev => prev.map(t => t.id === task.id ? data : t))
+      toast.success('Wallet payment successful. Task marked complete.')
+      setViewTask(null)
+    } catch (e) {
+      handleAuthFailure(e, 'Wallet payment failed')
+    } finally {
+      setPayingTaskId(null)
+    }
   }
 
   const loadRazorpay = () => {
@@ -482,6 +515,7 @@ export default function Marketplace() {
           onAccept={handleAccept}
           onSubmit={handleSubmit}
           onPay={handlePay}
+          onWalletPay={handleWalletPay}
           onFeedback={handleFeedback}
           currentUserId={user?.id}
         />

@@ -4,13 +4,14 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut, PaymentDemoOut
+from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut, PaymentDemoOut, WalletPaymentRequest
 from app.services.payment_service import (
     create_payment_order,
     get_transactions,
     get_wallet,
     payments_enabled,
     verify_payment,
+    wallet_pay,
 )
 from app.services import task_service, user_service
 from app.models.models import TaskStatus
@@ -134,6 +135,32 @@ async def verify(
     )
     if not success:
         raise HTTPException(status_code=400, detail="Payment verification failed")
+    completed = await task_service.complete_task(db, data.task_id)
+    if not completed:
+        raise HTTPException(status_code=400, detail="Unable to complete task after payment")
+    return completed
+
+
+@router.post("/wallet-pay", response_model=TaskOut)
+async def wallet_payment(
+    data: WalletPaymentRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    task = await task_service.get_task_by_id(db, data.task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task.poster_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Only the task poster can pay")
+    if task.status != TaskStatus.submitted:
+        raise HTTPException(status_code=400, detail="Task is not ready for payment")
+    try:
+        await wallet_pay(db, data.task_id, current_user.id)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     completed = await task_service.complete_task(db, data.task_id)
     if not completed:
         raise HTTPException(status_code=400, detail="Unable to complete task after payment")
