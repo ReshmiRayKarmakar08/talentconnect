@@ -5,6 +5,7 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_admin
+from app.core.config import settings
 from app.schemas.schemas import (
     UserPublic,
     AdminUserAction,
@@ -87,6 +88,23 @@ async def unban_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"message": f"User {user.username} unbanned successfully"}
+
+
+@router.delete("/users/{user_id}/delete")
+async def delete_user(
+    user_id: int,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    user = await user_service.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.email == settings.ADMIN_DEMO_EMAIL:
+        raise HTTPException(status_code=400, detail="Cannot delete the main admin")
+    deleted = await user_service.delete_user(db, user_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted successfully"}
 
 
 @router.get("/tasks", response_model=List[TaskOut])

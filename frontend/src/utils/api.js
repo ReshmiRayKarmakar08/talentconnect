@@ -183,6 +183,7 @@ export const adminAPI = {
   userDetail:     (id)  => api.get(`/admin/users/${id}/detail`),
   banUser:        (id)  => api.post(`/admin/users/${id}/ban`, {}),
   unbanUser:      (id)  => api.post(`/admin/users/${id}/unban`),
+  deleteUser:     (id)  => api.delete(`/admin/users/${id}/delete`),
   tasks:          (p)   => api.get('/admin/tasks', { params: p }),
   tasksDetailed:  (p)   => api.get('/admin/tasks-detailed', { params: p }),
   sessions:       (p)   => api.get('/admin/sessions', { params: p }),

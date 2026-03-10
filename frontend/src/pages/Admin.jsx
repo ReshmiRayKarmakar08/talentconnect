@@ -93,6 +93,17 @@ export default function AdminPanel() {
     }
   }
 
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Delete this user? This will deactivate and anonymize the account.')) return
+    try {
+      await adminAPI.deleteUser(userId)
+      setUsers(users.filter(u => u.id !== userId))
+      toast.success('User deleted')
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to delete user')
+    }
+  }
+
   const handleReviewLog = async (logId) => {
     try {
       await adminAPI.reviewFraudLog(logId)
@@ -207,6 +218,12 @@ export default function AdminPanel() {
                               className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 border border-white/10 text-gray-300 hover:text-white"
                             >
                               <Eye size={11} /> View
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u.id)}
+                              className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all flex items-center gap-1 border border-red-500/30 text-red-300 hover:bg-red-500/10"
+                            >
+                              <Trash2 size={11} /> Delete
                             </button>
                           </div>
                         )}

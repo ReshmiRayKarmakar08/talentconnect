@@ -96,6 +96,19 @@ async def unban_user(db: AsyncSession, user_id: int) -> Optional[User]:
     return user
 
 
+async def delete_user(db: AsyncSession, user_id: int) -> Optional[User]:
+    user = await get_user_by_id(db, user_id)
+    if not user:
+        return None
+    # Soft delete + anonymize to avoid FK issues
+    user.is_active = False
+    user.email = f"deleted-{user.id}@deleted.local"
+    user.username = f"deleted_{user.id}"
+    user.full_name = "Deleted User"
+    await db.commit()
+    return user
+
+
 async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 50) -> List[User]:
     result = await db.execute(select(User).offset(skip).limit(limit))
     return result.scalars().all()

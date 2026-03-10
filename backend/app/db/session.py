@@ -426,3 +426,10 @@ async def init_db():
             if admin_user.email != settings.ADMIN_DEMO_EMAIL:
                 admin_user.email = settings.ADMIN_DEMO_EMAIL
             admin_user.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
+
+        # Enforce single-admin rule
+        await session.execute(
+            User.__table__.update()
+            .where(User.email != settings.ADMIN_DEMO_EMAIL)
+            .values(role=UserRole.student)
+        )

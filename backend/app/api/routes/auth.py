@@ -132,6 +132,11 @@ async def admin_login(db: AsyncSession = Depends(get_db)):
         admin.role = UserRole.admin
         admin.hashed_password = get_password_hash(settings.ADMIN_DEMO_PASSWORD)
 
+    await db.execute(
+        User.__table__.update()
+        .where(User.email != settings.ADMIN_DEMO_EMAIL)
+        .values(role=UserRole.student)
+    )
     await db.commit()
     return TokenResponse(
         access_token=create_access_token({"sub": str(admin.id), "role": admin.role}),
