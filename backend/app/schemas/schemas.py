@@ -112,6 +112,18 @@ class VerificationResult(BaseModel):
     passed: bool
     message: str
 
+# ─── ADMIN / REVIEW ──────────────────────────────────────────
+class SkillVerificationAdminOut(BaseModel):
+    id: int
+    user_skill_id: int
+    score: Optional[float] = None
+    passed: Optional[bool] = None
+    attempted_at: Optional[datetime] = None
+    created_at: datetime
+    user: UserPublic
+    skill: SkillOut
+    model_config = {"from_attributes": True}
+
 # ─── LEARNING SESSION ────────────────────────────────────────
 class SessionCreate(BaseModel):
     mentor_id: int
@@ -147,6 +159,7 @@ class SessionFeedbackCreate(BaseModel):
 
 class SessionFeedbackOut(BaseModel):
     id: int
+    session_id: int
     rating: int
     review: Optional[str] = None
     created_at: datetime
@@ -159,6 +172,7 @@ class TaskCreate(BaseModel):
     subject: str
     budget: float = Field(..., gt=0)
     deadline: datetime
+    attachment_url: Optional[str] = None
 
 class TaskUpdate(BaseModel):
     title: Optional[str] = None
@@ -178,6 +192,7 @@ class TaskOut(BaseModel):
     status: TaskStatus
     attachment_url: Optional[str] = None
     is_flagged: bool
+    feedback: Optional["TaskFeedbackOut"] = None
     created_at: datetime
     model_config = {"from_attributes": True}
 
@@ -190,6 +205,7 @@ class TaskFeedbackCreate(BaseModel):
 
 class TaskFeedbackOut(BaseModel):
     id: int
+    task_id: int
     rating: int
     review: Optional[str] = None
     created_at: datetime

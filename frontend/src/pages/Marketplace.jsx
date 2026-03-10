@@ -50,14 +50,26 @@ function TaskCard({ task, onAccept, onView, isMyTask }) {
 }
 
 function CreateTaskModal({ onClose, onCreate }) {
-  const [form, setForm] = useState({ title: '', description: '', subject: '', budget: '', deadline: '' })
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    budget: '',
+    deadline: '',
+    attachment_url: '',
+  })
   const [loading, setLoading] = useState(false)
 
   const submit = async (e) => {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await tasksAPI.create({ ...form, budget: parseFloat(form.budget) })
+      const payload = {
+        ...form,
+        budget: parseFloat(form.budget),
+        attachment_url: form.attachment_url?.trim() || null,
+      }
+      const { data } = await tasksAPI.create(payload)
       onCreate(data)
       toast.success('Task posted!')
       onClose()
@@ -95,6 +107,11 @@ function CreateTaskModal({ onClose, onCreate }) {
             <label className="label">Deadline</label>
             <input type="datetime-local" value={form.deadline} onChange={e => setForm({...form, deadline: e.target.value})} className="input" required />
           </div>
+          <div>
+            <label className="label">Attachment URL (optional)</label>
+            <input value={form.attachment_url} onChange={e => setForm({...form, attachment_url: e.target.value})} className="input" placeholder="https://drive.google.com/..." />
+            <p className="mt-1 text-xs text-gray-500">Upload the file to Drive or any host and paste the share link here.</p>
+          </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="btn-secondary flex-1">Cancel</button>
             <button type="submit" disabled={loading} className="btn-primary flex-1 flex items-center justify-center gap-2">
@@ -108,9 +125,11 @@ function CreateTaskModal({ onClose, onCreate }) {
   )
 }
 
-function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, currentUserId }) {
+function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onFeedback, currentUserId }) {
   const [submitNotes, setSubmitNotes] = useState('')
   const [loading, setLoading] = useState(false)
+  const [feedback, setFeedback] = useState({ rating: 5, review: '' })
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
   const isAcceptor = task.acceptor?.id === currentUserId
   const isPoster = task.poster?.id === currentUserId
 
@@ -119,6 +138,19 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, currentUser
     try { await onSubmit(task.id, submitNotes); toast.success('Task submitted!'); onClose() }
     catch { toast.error('Failed') }
     finally { setLoading(false) }
+  }
+
+  const handleFeedback = async () => {
+    setFeedbackLoading(true)
+    try {
+      await onFeedback(task.id, feedback)
+      toast.success('Feedback submitted!')
+      onClose()
+    } catch {
+      toast.error('Failed to submit feedback')
+    } finally {
+      setFeedbackLoading(false)
+    }
   }
 
   return (
@@ -147,6 +179,15 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, currentUser
             </div>
           </div>
 
+          {task.attachment_url && (
+            <div className="rounded-xl border border-surface-border bg-surface-hover p-3 text-sm text-gray-300">
+              Attachment:{' '}
+              <a href={task.attachment_url} target="_blank" rel="noreferrer" className="text-brand-300 hover:text-white">
+                View file
+              </a>
+            </div>
+          )}
+
           {task.status === 'assigned' && isAcceptor && (
             <div>
               <label className="label">Submission Notes</label>
@@ -163,6 +204,47 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, currentUser
               <CheckCircle2 size={16} />
               Pay and Mark Complete
             </button>
+          )}
+
+          {task.status === 'completed' && isPoster && !task.feedback && (
+            <div className="rounded-xl border border-surface-border bg-surface-hover p-4">
+              <p className="text-sm font-semibold text-white">Leave feedback</p>
+              <div className="mt-3 grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    onClick={() => setFeedback(prev => ({ ...prev, rating: value }))}
+                    className={`rounded-lg border px-2 py-1 text-xs font-medium transition-colors
+                      ${feedback.rating === value ? 'border-brand-500 bg-brand-500/20 text-brand-200' : 'border-white/10 text-gray-400 hover:text-white'}`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+              <textarea
+                value={feedback.review}
+                onChange={(e) => setFeedback(prev => ({ ...prev, review: e.target.value }))}
+                className="input mt-3 resize-none"
+                rows={3}
+                placeholder="Share your experience (optional)"
+              />
+              <button
+                onClick={handleFeedback}
+                disabled={feedbackLoading}
+                className="btn-primary mt-3 w-full flex items-center justify-center gap-2"
+              >
+                {feedbackLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                Submit Feedback
+              </button>
+            </div>
+          )}
+
+          {task.status === 'completed' && isPoster && task.feedback && (
+            <div className="rounded-xl border border-surface-border bg-surface-hover p-4 text-sm text-gray-300">
+              <p className="text-sm font-semibold text-white">Your feedback</p>
+              <p className="mt-2">Rating: {task.feedback.rating}/5</p>
+              {task.feedback.review ? <p className="mt-1 text-gray-400">{task.feedback.review}</p> : null}
+            </div>
           )}
         </div>
         <div className="p-6 pt-0">
@@ -220,6 +302,12 @@ export default function Marketplace() {
   const handleSubmit = async (taskId, notes) => {
     const { data } = await tasksAPI.submit(taskId, { submission_notes: notes })
     setMyTasks(prev => prev.map(t => t.id === taskId ? data : t))
+  }
+
+  const handleFeedback = async (taskId, feedback) => {
+    const { data } = await tasksAPI.feedback(taskId, feedback)
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
+    setMyTasks(prev => prev.map(t => t.id === taskId ? { ...t, feedback: data } : t))
   }
 
   const loadRazorpay = () => {
@@ -394,6 +482,7 @@ export default function Marketplace() {
           onAccept={handleAccept}
           onSubmit={handleSubmit}
           onPay={handlePay}
+          onFeedback={handleFeedback}
           currentUserId={user?.id}
         />
       )}

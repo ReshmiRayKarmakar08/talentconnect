@@ -173,3 +173,16 @@ async def get_mentor_session_count(db: AsyncSession, mentor_id: int) -> int:
         select(func.count(LearningSession.id)).where(LearningSession.mentor_id == mentor_id)
     )
     return result.scalar_one() or 0
+
+
+async def get_all_skill_verifications(db: AsyncSession, skip: int = 0, limit: int = 100):
+    result = await db.execute(
+        select(SkillVerification)
+        .options(
+            selectinload(SkillVerification.user_skill).selectinload(UserSkill.user),
+            selectinload(SkillVerification.user_skill).selectinload(UserSkill.skill),
+        )
+        .order_by(SkillVerification.created_at.desc())
+        .offset(skip).limit(limit)
+    )
+    return result.scalars().all()

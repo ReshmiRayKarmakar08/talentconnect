@@ -21,6 +21,10 @@ export default function AdminPanel() {
   const [stats, setStats] = useState(null)
   const [users, setUsers] = useState([])
   const [tasks, setTasks] = useState([])
+  const [sessions, setSessions] = useState([])
+  const [sessionFeedback, setSessionFeedback] = useState([])
+  const [taskFeedback, setTaskFeedback] = useState([])
+  const [skillVerifications, setSkillVerifications] = useState([])
   const [fraudLogs, setFraudLogs] = useState([])
   const [tab, setTab] = useState('overview')
   const [loading, setLoading] = useState(true)
@@ -30,9 +34,20 @@ export default function AdminPanel() {
       adminAPI.stats(),
       adminAPI.users(),
       adminAPI.tasks(),
+      adminAPI.sessions(),
+      adminAPI.sessionFeedback(),
+      adminAPI.taskFeedback(),
+      adminAPI.skillVerifications(),
       adminAPI.fraudLogs(),
-    ]).then(([s, u, t, f]) => {
-      setStats(s.data); setUsers(u.data); setTasks(t.data); setFraudLogs(f.data)
+    ]).then(([s, u, t, sess, sfb, tfb, sv, f]) => {
+      setStats(s.data)
+      setUsers(u.data)
+      setTasks(t.data)
+      setSessions(sess.data)
+      setSessionFeedback(sfb.data)
+      setTaskFeedback(tfb.data)
+      setSkillVerifications(sv.data)
+      setFraudLogs(f.data)
     }).catch(() => toast.error('Failed to load admin data'))
     .finally(() => setLoading(false))
   }, [])
@@ -61,7 +76,7 @@ export default function AdminPanel() {
     } catch { toast.error('Failed') }
   }
 
-  const tabs = ['overview', 'users', 'tasks', 'fraud-logs']
+  const tabs = ['overview', 'users', 'tasks', 'sessions', 'skill-verifications', 'session-feedback', 'task-feedback', 'fraud-logs']
 
   return (
     <div className="p-8 animate-slide-up">
@@ -195,6 +210,123 @@ export default function AdminPanel() {
                           </button>
                         )}
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {tab === 'sessions' && (
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-hover">
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Session</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Mentor</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Learner</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Scheduled</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessions.map(s => (
+                    <tr key={s.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-200">Session #{s.id}</p>
+                        <p className="text-xs text-gray-500">{s.skill?.name}</p>
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">{s.mentor?.full_name}</td>
+                      <td className="px-4 py-3 text-gray-400">{s.learner?.full_name}</td>
+                      <td className="px-4 py-3">
+                        <span className={`badge ${s.status === 'completed' ? 'badge-green' : s.status === 'cancelled' ? 'badge-red' : 'badge-blue'}`}>
+                          {s.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {tab === 'skill-verifications' && (
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-hover">
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">User</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Skill</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Score</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Attempted</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {skillVerifications.map(v => (
+                    <tr key={v.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                      <td className="px-4 py-3 text-gray-300">{v.user?.full_name}</td>
+                      <td className="px-4 py-3 text-gray-300">{v.skill?.name}</td>
+                      <td className="px-4 py-3 text-gray-300">{v.score?.toFixed(0) || '0'}%</td>
+                      <td className="px-4 py-3">
+                        <span className={`badge ${v.passed ? 'badge-green' : 'badge-red'}`}>
+                          {v.passed ? 'Passed' : 'Failed'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-gray-400">
+                        {v.attempted_at ? new Date(v.attempted_at).toLocaleString() : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {tab === 'session-feedback' && (
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-hover">
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Session</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Rating</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Review</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sessionFeedback.map(fb => (
+                    <tr key={fb.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                      <td className="px-4 py-3 text-gray-300">#{fb.session_id}</td>
+                      <td className="px-4 py-3 text-gray-300">{fb.rating}</td>
+                      <td className="px-4 py-3 text-gray-400">{fb.review || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500">{new Date(fb.created_at).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {tab === 'task-feedback' && (
+            <div className="card overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-surface-border bg-surface-hover">
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Task</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Rating</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Review</th>
+                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {taskFeedback.map(fb => (
+                    <tr key={fb.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                      <td className="px-4 py-3 text-gray-300">#{fb.task_id}</td>
+                      <td className="px-4 py-3 text-gray-300">{fb.rating}</td>
+                      <td className="px-4 py-3 text-gray-400">{fb.review || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500">{new Date(fb.created_at).toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>

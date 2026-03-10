@@ -5,9 +5,21 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_admin
-from app.schemas.schemas import UserPublic, AdminUserAction, AdminTaskAction, FraudLogOut, PlatformStats, TaskOut
-from app.services import user_service, task_service, session_service
-from app.models.models import User, Task, LearningSession, Payment, FraudLog
+from app.schemas.schemas import (
+    UserPublic,
+    AdminUserAction,
+    AdminTaskAction,
+    FraudLogOut,
+    PlatformStats,
+    TaskOut,
+    SessionOut,
+    SessionFeedbackOut,
+    TaskFeedbackOut,
+    SkillVerificationAdminOut,
+)
+from app.services import user_service, task_service, session_service, skill_service
+from app.models.models import User, Task, LearningSession, Payment, FraudLog, SessionFeedback, TaskFeedback, SkillVerification, UserSkill
+from sqlalchemy.orm import selectinload
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -77,6 +89,76 @@ async def list_tasks(
     _=Depends(get_current_admin),
 ):
     return await task_service.get_all_tasks(db, skip, limit)
+
+
+@router.get("/sessions", response_model=List[SessionOut])
+async def list_sessions(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    return await session_service.get_all_sessions(db, skip, limit)
+
+
+@router.get("/session-feedback", response_model=List[SessionFeedbackOut])
+async def list_session_feedback(
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    result = await db.execute(
+        select(SessionFeedback)
+        .order_by(SessionFeedback.created_at.desc())
+        .limit(100)
+    )
+    return result.scalars().all()
+
+
+@router.get("/task-feedback", response_model=List[TaskFeedbackOut])
+async def list_task_feedback(
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    result = await db.execute(
+        select(TaskFeedback)
+        .order_by(TaskFeedback.created_at.desc())
+        .limit(100)
+    )
+    return result.scalars().all()
+
+
+@router.get("/skill-verifications", response_model=List[SkillVerificationAdminOut])
+async def list_skill_verifications(
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_admin),
+):
+    result = await db.execute(
+        select(SkillVerification)
+        .options(
+            selectinload(SkillVerification.user_skill).selectinload(UserSkill.user),
+            selectinload(SkillVerification.user_skill).selectinload(UserSkill.skill),
+        )
+        .order_by(SkillVerification.created_at.desc())
+        .limit(100)
+    )
+    verifications = result.scalars().all()
+    response = []
+    for v in verifications:
+        if not v.user_skill or not v.user_skill.user or not v.user_skill.skill:
+            continue
+        response.append(
+            SkillVerificationAdminOut(
+                id=v.id,
+                user_skill_id=v.user_skill_id,
+                score=v.score,
+                passed=v.passed,
+                attempted_at=v.attempted_at,
+                created_at=v.created_at,
+                user=v.user_skill.user,
+                skill=v.user_skill.skill,
+            )
+        )
+    return response
 
 
 @router.post("/tasks/{task_id}/flag")
