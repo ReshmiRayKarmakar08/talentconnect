@@ -156,29 +156,21 @@ Interactive docs:
 
 ## Screenshots
 
-Add your platform screenshots in this section.
-
-Suggested slots:
-
-```md
 ### Landing Page
+
 ![Landing Page](./screenshots/landing-page.png)
 
+### Login
+
+![Login](./screenshots/login.png)
+
 ### Dashboard
+
 ![Dashboard](./screenshots/dashboard.png)
 
-### Skills
-![Skills](./screenshots/skills.png)
-
-### Marketplace
-![Marketplace](./screenshots/marketplace.png)
-
-### Sessions
-![Sessions](./screenshots/sessions.png)
-
 ### AI Assistant
+
 ![AI Assistant](./screenshots/ai-assistant.png)
-```
 
 ## Roadmap
 
