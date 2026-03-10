@@ -63,34 +63,61 @@ async def list_users(
     db: AsyncSession = Depends(get_db),
     _=Depends(get_current_admin),
 ):
-    result = await db.execute(select(User).offset(skip).limit(limit))
-    users = result.scalars().all()
+    result = await db.execute(
+        select(
+            User.id,
+            User.email,
+            User.username,
+            User.full_name,
+            User.bio,
+            User.college,
+            User.avatar_url,
+            User.role,
+            User.reputation_score,
+            User.is_active,
+            User.created_at,
+        )
+        .offset(skip)
+        .limit(limit)
+    )
+    rows = result.all()
 
-    def safe_email(user: User) -> str:
-        email = (user.email or "").strip()
-        if "@" not in email:
-            return f"deleted-{user.id}@deleted.local"
-        return email
-
-    normalized = []
-    for u in users:
-        email = safe_email(u)
-        username = u.username or f"user_{u.id}"
-        full_name = u.full_name or username
-        role = u.role if u.role in (UserRole.student, UserRole.admin) else UserRole.student
-        created_at = u.created_at or datetime.utcnow()
+    normalized: List[UserPublic] = []
+    for (
+        user_id,
+        email,
+        username,
+        full_name,
+        bio,
+        college,
+        avatar_url,
+        role,
+        reputation_score,
+        is_active,
+        created_at,
+    ) in rows:
+        safe_email = (email or "").strip()
+        if "@" not in safe_email:
+            safe_email = f"deleted-{user_id}@deleted.local"
+        safe_username = username or f"user_{user_id}"
+        safe_full_name = full_name or safe_username
+        if isinstance(role, UserRole):
+            safe_role = role
+        else:
+            safe_role = UserRole.admin if str(role).lower() == "admin" else UserRole.student
+        safe_created = created_at or datetime.utcnow()
         normalized.append(UserPublic(
-            id=u.id,
-            email=email,
-            username=username,
-            full_name=full_name,
-            bio=u.bio,
-            college=u.college,
-            avatar_url=u.avatar_url,
-            role=role,
-            reputation_score=u.reputation_score or 0.0,
-            is_active=bool(u.is_active),
-            created_at=created_at,
+            id=user_id,
+            email=safe_email,
+            username=safe_username,
+            full_name=safe_full_name,
+            bio=bio,
+            college=college,
+            avatar_url=avatar_url,
+            role=safe_role,
+            reputation_score=reputation_score or 0.0,
+            is_active=bool(is_active),
+            created_at=safe_created,
         ))
     return normalized
 
