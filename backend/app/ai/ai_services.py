@@ -17,7 +17,7 @@ import re
 from app.core.config import settings
 
 
-# ─── SKILL MATCHING ──────────────────────────────────────────
+# ─── SKILL MATCHING ──────────────────────────────────────
 class SkillMatcher:
     """
     Cosine similarity based skill matching.
