@@ -82,7 +82,11 @@ async def get_verification_quiz(
     if not user_skill or user_skill.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="User skill not found")
 
-    questions = get_quiz_for_skill(user_skill.skill.name)
+    questions = get_quiz_for_skill(
+        user_skill.skill.name,
+        category=user_skill.skill.category,
+        tags=user_skill.skill.tags,
+    )
     # Strip answers before sending to client
     client_questions = [{"question": q["question"], "options": q["options"]} for q in questions]
 

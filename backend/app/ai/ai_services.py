@@ -8,6 +8,8 @@ AI Module for TalentConnect
 """
 import numpy as np
 import httpx
+import hashlib
+import random
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MultiLabelBinarizer
 from collections import defaultdict
@@ -216,12 +218,120 @@ SKILL_QUIZZES: Dict[str, List[Dict]] = {
 }
 
 
-def get_quiz_for_skill(skill_name: str) -> List[Dict]:
-    key = skill_name.lower()
+DOMAIN_QUESTION_BANK: Dict[str, List[str]] = {
+    "cloud": [
+        "auto scaling",
+        "high availability",
+        "load balancer",
+        "region vs availability zone",
+        "IAM least privilege",
+    ],
+    "data": [
+        "data cleaning",
+        "feature engineering",
+        "model evaluation",
+        "overfitting prevention",
+        "train test split",
+    ],
+    "web": [
+        "HTTP methods",
+        "authentication flow",
+        "error handling",
+        "API versioning",
+        "input validation",
+    ],
+    "mobile": [
+        "state management",
+        "navigation",
+        "performance optimization",
+        "offline caching",
+        "platform specific behavior",
+    ],
+    "devops": [
+        "CI pipeline",
+        "containerization",
+        "deployment rollback",
+        "logging and monitoring",
+        "infrastructure as code",
+    ],
+    "design": [
+        "design consistency",
+        "color contrast",
+        "responsive layout",
+        "component reuse",
+        "user flow clarity",
+    ],
+    "default": [
+        "core concepts",
+        "best practices",
+        "real world usage",
+        "debugging",
+        "performance",
+    ],
+}
+
+
+def _detect_domain(skill_name: str, category: Optional[str], tags: Optional[List[str]]) -> str:
+    source = " ".join([skill_name or "", category or "", *(tags or [])]).lower()
+    if any(k in source for k in ["cloud", "aws", "azure", "gcp", "devops", "kubernetes"]):
+        return "cloud"
+    if any(k in source for k in ["data", "ml", "ai", "python", "pandas", "numpy", "analytics"]):
+        return "data"
+    if any(k in source for k in ["react", "web", "frontend", "backend", "api", "javascript", "node"]):
+        return "web"
+    if any(k in source for k in ["android", "ios", "flutter", "react native", "mobile", "dart"]):
+        return "mobile"
+    if any(k in source for k in ["ci", "cd", "docker", "terraform", "pipeline"]):
+        return "devops"
+    if any(k in source for k in ["ui", "ux", "figma", "design", "prototype"]):
+        return "design"
+    return "default"
+
+
+def _build_dynamic_quiz(skill_name: str, category: Optional[str], tags: Optional[List[str]]) -> List[Dict]:
+    normalized_skill = (skill_name or "General Skill").strip()
+    domain = _detect_domain(normalized_skill, category, tags)
+    concepts = DOMAIN_QUESTION_BANK.get(domain, DOMAIN_QUESTION_BANK["default"])
+
+    seed_source = f"{normalized_skill}|{category or ''}|{'|'.join(tags or [])}"
+    seed = int(hashlib.sha256(seed_source.encode("utf-8")).hexdigest()[:8], 16)
+    rng = random.Random(seed)
+    shuffled = concepts[:]
+    rng.shuffle(shuffled)
+
+    quiz: List[Dict] = []
+    for concept in shuffled[:5]:
+        question = f"In {normalized_skill}, what is the best explanation of '{concept}'?"
+        correct = f"A key {normalized_skill} concept focused on {concept}."
+        distractors = [
+            f"An optional feature unrelated to {normalized_skill}.",
+            "A deprecated approach that should always be avoided.",
+            "Only a UI styling rule with no system impact.",
+        ]
+        options = [correct, *distractors]
+        rng.shuffle(options)
+        answer_idx = options.index(correct)
+        quiz.append(
+            {
+                "question": question,
+                "options": options,
+                "answer": answer_idx,
+            }
+        )
+
+    return quiz
+
+
+def get_quiz_for_skill(
+    skill_name: str,
+    category: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+) -> List[Dict]:
+    key = (skill_name or "").lower().strip()
     for k in SKILL_QUIZZES:
         if k in key or key in k:
             return SKILL_QUIZZES[k]
-    return SKILL_QUIZZES["default"]
+    return _build_dynamic_quiz(skill_name, category, tags)
 
 
 # ─── AI CHATBOT ──────────────────────────────────────────────
