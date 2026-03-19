@@ -107,13 +107,21 @@ async def get_mentors_for_skill(db: AsyncSession, skill_id: int) -> List[UserSki
 async def create_verification_quiz(
     db: AsyncSession, user_skill_id: int, questions: list
 ) -> SkillVerification:
-    # Remove any existing
+    # Reuse existing row to avoid unique-key race on user_skill_id.
+    # This makes re-opening quiz after cancel reliable.
     existing = await db.execute(
         select(SkillVerification).where(SkillVerification.user_skill_id == user_skill_id)
     )
     old = existing.scalar_one_or_none()
     if old:
-        await db.delete(old)
+        old.questions = questions
+        old.user_answers = None
+        old.score = None
+        old.passed = None
+        old.attempted_at = None
+        await db.commit()
+        await db.refresh(old)
+        return old
 
     verif = SkillVerification(user_skill_id=user_skill_id, questions=questions)
     db.add(verif)

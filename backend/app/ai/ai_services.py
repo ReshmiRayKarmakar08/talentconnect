@@ -8,7 +8,6 @@ AI Module for TalentConnect
 """
 import numpy as np
 import httpx
-import hashlib
 import random
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -293,9 +292,7 @@ def _build_dynamic_quiz(skill_name: str, category: Optional[str], tags: Optional
     domain = _detect_domain(normalized_skill, category, tags)
     concepts = DOMAIN_QUESTION_BANK.get(domain, DOMAIN_QUESTION_BANK["default"])
 
-    seed_source = f"{normalized_skill}|{category or ''}|{'|'.join(tags or [])}"
-    seed = int(hashlib.sha256(seed_source.encode("utf-8")).hexdigest()[:8], 16)
-    rng = random.Random(seed)
+    rng = random.SystemRandom()
     shuffled = concepts[:]
     rng.shuffle(shuffled)
 
