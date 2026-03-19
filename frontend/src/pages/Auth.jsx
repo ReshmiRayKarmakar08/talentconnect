@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import toast from 'react-hot-toast'
 import BrandMark from '../components/branding/BrandMark'
-import { authAPI } from '../utils/api'
+import api, { authAPI } from '../utils/api'
 
 function AuthLayout({ children, title, subtitle, withCard = true }) {
   return (
@@ -52,8 +52,16 @@ export function LoginPage() {
   const adminEmail = 'admin@talentconnect.com'
   const adminPassword = 'Admin@12345'
 
+  useEffect(() => {
+    api.get('/health').catch(() => {})
+  }, [])
+
   const onSubmit = async (data) => {
     setLoading(true)
+    let warmupToast
+    const warmupTimer = setTimeout(() => {
+      warmupToast = toast.loading('Waking the server, this can take a moment...')
+    }, 1500)
     try {
       const user = await login(data.email, data.password)
       toast.success('Welcome back!')
@@ -61,6 +69,8 @@ export function LoginPage() {
     } catch (e) {
       toast.error(e.response?.data?.detail || 'Invalid credentials')
     } finally {
+      clearTimeout(warmupTimer)
+      if (warmupToast) toast.dismiss(warmupToast)
       setLoading(false)
     }
   }
