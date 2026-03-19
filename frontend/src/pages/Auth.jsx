@@ -10,6 +10,15 @@ import api, { authAPI } from '../utils/api'
 function AuthLayout({ children, title, subtitle, withCard = true }) {
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-4">
+      <div className="absolute left-5 top-5 z-10">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-gray-300 transition-colors hover:text-white"
+        >
+          <span className="text-base leading-none">←</span>
+          Back
+        </Link>
+      </div>
       {/* Ambient background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand-600/10 rounded-full blur-3xl" />
