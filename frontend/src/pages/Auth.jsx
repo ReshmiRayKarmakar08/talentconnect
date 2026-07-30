@@ -146,6 +146,22 @@ export function LoginPage() {
           {loading ? <Loader2 size={16} className="animate-spin" /> : null}
           {loading ? 'Signing in...' : 'Sign In'}
         </button>
+
+        <button
+          type="button"
+          disabled={loading}
+          onClick={async () => {
+            setValue('email', 'learner.demo@example.com', { shouldValidate: true })
+            setValue('password', '12345678', { shouldValidate: true })
+            // We need a short delay to ensure react-hook-form registers the input value changes before we submit
+            setTimeout(() => {
+              handleSubmit(onSubmit)()
+            }, 50)
+          }}
+          className="w-full flex items-center justify-center gap-2 mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/10 transition-all duration-200"
+        >
+          Login as Guest (Demo)
+        </button>
             </form>
 
             <p className="text-center text-gray-500 text-sm mt-5">
