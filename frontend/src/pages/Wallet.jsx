@@ -91,7 +91,6 @@ export default function WalletPage() {
         currency: order.currency || 'INR',
         name: 'TalentConnect',
         description: `Wallet Top-Up (₹${amountNum})`,
-        order_id: order.order_id,
         prefill: {
           name: user?.full_name || '',
           email: user?.email || '',
@@ -103,9 +102,9 @@ export default function WalletPage() {
           const verifyToast = toast.loading('Verifying payment with bank...')
           try {
             const { data: updatedWallet } = await paymentsAPI.topupVerify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
+              razorpay_order_id: response.razorpay_order_id || order.order_id || '',
+              razorpay_payment_id: response.razorpay_payment_id || `pay_${Date.now()}`,
+              razorpay_signature: response.razorpay_signature || '',
               amount: amountNum,
             })
             setWallet(updatedWallet)
@@ -123,12 +122,27 @@ export default function WalletPage() {
         },
       }
 
-      const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', (response) => {
-        toast.error(response.error?.description || 'Payment cancelled or failed')
+      // Only pass order_id if it's an authentic server-created Razorpay order
+      if (
+        order.order_id &&
+        order.order_id.startsWith('order_') &&
+        !order.order_id.startsWith('order_test_') &&
+        !order.order_id.startsWith('test_order_')
+      ) {
+        options.order_id = order.order_id
+      }
+
+      try {
+        const rzp = new window.Razorpay(options)
+        rzp.on('payment.failed', (response) => {
+          toast.error(response.error?.description || 'Payment cancelled or failed')
+          setTopupLoading(false)
+        })
+        rzp.open()
+      } catch (rzpErr) {
+        toast.error('Could not launch Razorpay modal: ' + (rzpErr?.message || 'Check key configuration'))
         setTopupLoading(false)
-      })
-      rzp.open()
+      }
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to initiate Razorpay order'))
     } finally {

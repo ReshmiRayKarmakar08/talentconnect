@@ -59,6 +59,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
 # ─── ROUTES ──────────────────────────────────────────────────
 app.include_router(health.router, prefix="/api")
 app.include_router(health.router)  # Also expose /health, /health/db, /health/ping at root level
@@ -68,8 +71,25 @@ app.include_router(skills.router, prefix="/api")
 app.include_router(sessions.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
 app.include_router(payments.router, prefix="/api")
+app.include_router(payments.router)  # Also expose /payments at root level
 app.include_router(ai.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "")
+    cors_origin = origin if (origin in allowed_origins or ".vercel.app" in origin) else "*"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc) or "Internal server error"},
+        headers={
+            "Access-Control-Allow-Origin": cors_origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        },
+    )
 
 
 @app.api_route("/", methods=["GET", "HEAD"])

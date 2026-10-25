@@ -229,7 +229,7 @@ async def topup_order(
     ensure_payments_enabled()
     try:
         return await create_topup_order(db, current_user.id, data.amount)
-    except ValueError as e:
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -249,7 +249,7 @@ async def topup_verify(
             data.razorpay_signature,
             data.amount,
         )
-    except ValueError as e:
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -267,5 +267,5 @@ async def withdraw(
             data.upi_or_account,
             data.notes,
         )
-    except ValueError as e:
+    except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
