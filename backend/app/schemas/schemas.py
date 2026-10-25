@@ -264,6 +264,20 @@ class WalletDebitRequest(BaseModel):
     description: str
     reference_id: Optional[str] = None
 
+class WalletTopupOrderCreate(BaseModel):
+    amount: float = Field(..., gt=0, le=100000)
+
+class WalletTopupVerify(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    amount: float
+
+class WalletWithdrawRequest(BaseModel):
+    amount: float = Field(..., gt=0)
+    upi_or_account: str = Field(..., min_length=3, max_length=100)
+    notes: Optional[str] = None
+
 # ─── WALLET ──────────────────────────────────────────────────
 class WalletOut(BaseModel):
     balance: float

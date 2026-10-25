@@ -1,5 +1,7 @@
 import hmac
 import hashlib
+import time
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -188,6 +190,92 @@ async def wallet_debit(
         description=description,
         reference_id=reference_id,
     ))
+    await db.commit()
+    await db.refresh(wallet)
+    return wallet
+
+
+async def create_topup_order(db: AsyncSession, user_id: int, amount: float) -> PaymentOrderOut:
+    if amount <= 0:
+        raise ValueError("Top-up amount must be greater than 0")
+    client = get_razorpay_client()
+    amount_paise = int(round(amount * 100))
+    order = client.order.create({
+        "amount": amount_paise,
+        "currency": "INR",
+        "receipt": f"topup_{user_id}_{int(time.time())}",
+        "notes": {"user_id": str(user_id), "type": "wallet_topup"},
+    })
+    return PaymentOrderOut(
+        order_id=order["id"],
+        amount=amount_paise,
+        currency="INR",
+        key_id=settings.RAZORPAY_KEY_ID,
+    )
+
+
+async def verify_topup(
+    db: AsyncSession,
+    user_id: int,
+    razorpay_order_id: str,
+    razorpay_payment_id: str,
+    razorpay_signature: str,
+    amount: float,
+) -> Wallet:
+    expected = hmac.new(
+        settings.RAZORPAY_KEY_SECRET.encode(),
+        f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(expected, razorpay_signature):
+        raise ValueError("Invalid Razorpay payment signature")
+
+    wallet = await get_wallet(db, user_id)
+    wallet.balance += amount
+    wallet.total_earned += amount
+
+    txn = Transaction(
+        wallet_id=wallet.id,
+        amount=amount,
+        transaction_type="credit",
+        description="Wallet top-up via Razorpay",
+        reference_id=razorpay_payment_id,
+    )
+    db.add(txn)
+    await db.commit()
+    await db.refresh(wallet)
+    return wallet
+
+
+async def withdraw_wallet(
+    db: AsyncSession,
+    user_id: int,
+    amount: float,
+    upi_or_account: str,
+    notes: str | None = None,
+) -> Wallet:
+    if amount <= 0:
+        raise ValueError("Withdrawal amount must be greater than 0")
+    wallet = await get_wallet(db, user_id)
+    if wallet.balance < amount:
+        raise ValueError(f"Insufficient balance. Your available balance is ₹{wallet.balance:.2f}")
+
+    wallet.balance -= amount
+    wallet.total_spent += amount
+
+    description = f"Withdrawal to {upi_or_account}"
+    if notes:
+        description += f" ({notes})"
+
+    txn = Transaction(
+        wallet_id=wallet.id,
+        amount=amount,
+        transaction_type="debit",
+        description=description,
+        reference_id=f"wth_{uuid.uuid4().hex[:10]}",
+    )
+    db.add(txn)
     await db.commit()
     await db.refresh(wallet)
     return wallet

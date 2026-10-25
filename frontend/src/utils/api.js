@@ -172,6 +172,10 @@ export const paymentsAPI = {
   walletDebit:   (d) => api.post('/payments/wallet-debit', d),
   wallet:        ()  => api.get('/payments/wallet'),
   transactions:  ()  => api.get('/payments/transactions'),
+  config:        ()  => api.get('/payments/config'),
+  topupOrder:    (d) => api.post('/payments/topup/order', d),
+  topupVerify:   (d) => api.post('/payments/topup/verify', d),
+  withdraw:      (d) => api.post('/payments/withdraw', d),
 }
 
 export const aiAPI = {

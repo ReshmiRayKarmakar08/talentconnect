@@ -4,7 +4,12 @@ from typing import List
 
 from app.db.session import get_db
 from app.core.security import get_current_user
-from app.schemas.schemas import PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut, TransactionOut, TaskOut, PaymentDemoOut, WalletPaymentRequest, WalletDebitRequest
+from app.schemas.schemas import (
+    PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut,
+    TransactionOut, TaskOut, PaymentDemoOut, WalletPaymentRequest,
+    WalletDebitRequest, WalletTopupOrderCreate, WalletTopupVerify,
+    WalletWithdrawRequest, TaskCreate, UserRegister
+)
 from app.services.payment_service import (
     create_payment_order,
     get_transactions,
@@ -13,6 +18,9 @@ from app.services.payment_service import (
     verify_payment,
     wallet_pay,
     wallet_debit,
+    create_topup_order,
+    verify_topup,
+    withdraw_wallet,
 )
 from app.services import task_service, user_service
 from app.models.models import TaskStatus
@@ -199,5 +207,65 @@ async def debit_wallet(
             data.reference_id,
         )
         return wallet
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/config")
+async def payment_config():
+    return {
+        "payments_enabled": payments_enabled(),
+        "key_id": settings.RAZORPAY_KEY_ID,
+        "payment_page_url": getattr(settings, "RAZORPAY_PAYMENT_PAGE_URL", "https://rzp.io/rzp/m0ll5SZl"),
+    }
+
+
+@router.post("/topup/order", response_model=PaymentOrderOut)
+async def topup_order(
+    data: WalletTopupOrderCreate,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ensure_payments_enabled()
+    try:
+        return await create_topup_order(db, current_user.id, data.amount)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/topup/verify", response_model=WalletOut)
+async def topup_verify(
+    data: WalletTopupVerify,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ensure_payments_enabled()
+    try:
+        return await verify_topup(
+            db,
+            current_user.id,
+            data.razorpay_order_id,
+            data.razorpay_payment_id,
+            data.razorpay_signature,
+            data.amount,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/withdraw", response_model=WalletOut)
+async def withdraw(
+    data: WalletWithdrawRequest,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await withdraw_wallet(
+            db,
+            current_user.id,
+            data.amount,
+            data.upi_or_account,
+            data.notes,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

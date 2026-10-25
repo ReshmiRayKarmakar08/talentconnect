@@ -18,10 +18,11 @@ class Settings(BaseSettings):
 
     REDIS_URL: str = "redis://localhost:6379/0"
 
-    RAZORPAY_KEY_ID: str = ""
-    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_KEY_ID: str = "rzp_test_SjgALiWCDFMzmo"
+    RAZORPAY_KEY_SECRET: str = "6kz5MYXQKGeQn5WkuIL5MFSz"
+    RAZORPAY_PAYMENT_PAGE_URL: str = "https://rzp.io/rzp/m0ll5SZl"
     DEMO_MODE: bool = False
-    INITIAL_WALLET_CREDIT: int = 1000
+    INITIAL_WALLET_CREDIT: int = 50
     ADMIN_DEMO_EMAIL: str = "admin@talentconnect.com"
     ADMIN_DEMO_PASSWORD: str = "Admin@12345"
 
