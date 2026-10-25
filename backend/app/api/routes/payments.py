@@ -8,7 +8,8 @@ from app.schemas.schemas import (
     PaymentOrderCreate, PaymentOrderOut, PaymentVerify, WalletOut,
     TransactionOut, TaskOut, PaymentDemoOut, WalletPaymentRequest,
     WalletDebitRequest, WalletTopupOrderCreate, WalletTopupVerify,
-    WalletWithdrawRequest, TaskCreate, UserRegister
+    WalletWithdrawRequest, TaskCreate, UserRegister,
+    SessionOrderCreate, SessionPaymentVerify, SessionOut
 )
 from app.services.payment_service import (
     create_payment_order,
@@ -21,6 +22,8 @@ from app.services.payment_service import (
     create_topup_order,
     verify_topup,
     withdraw_wallet,
+    create_session_payment_order,
+    verify_session_payment_and_book,
 )
 from app.services import task_service, user_service
 from app.models.models import TaskStatus
@@ -269,3 +272,51 @@ async def withdraw(
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/session/order", response_model=PaymentOrderOut)
+async def session_payment_order(
+    data: SessionOrderCreate,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ensure_payments_enabled()
+    if data.mentor_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot book a session with yourself")
+    try:
+        return await create_session_payment_order(
+            db,
+            current_user.id,
+            data.mentor_id,
+            data.skill_id,
+            data.duration_minutes,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/session/verify", response_model=SessionOut)
+async def session_payment_verify(
+    data: SessionPaymentVerify,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    ensure_payments_enabled()
+    if data.mentor_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot book a session with yourself")
+    try:
+        session = await verify_session_payment_and_book(db, current_user.id, data)
+        await user_service.create_notification(
+            db,
+            data.mentor_id,
+            title="New Paid Session Booking!",
+            message=f"{current_user.full_name} booked and paid for a session with you via Razorpay.",
+            notif_type="session",
+            metadata={"session_id": session.id},
+        )
+        return session
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

@@ -69,6 +69,7 @@ export default function WalletPage() {
 
   // Handle Top-Up via Razorpay
   const handleTopup = async () => {
+    if (topupLoading) return
     const amountNum = parseFloat(topupAmount)
     if (!amountNum || amountNum <= 0) {
       toast.error('Please enter a valid top-up amount')
@@ -161,6 +162,7 @@ export default function WalletPage() {
   // Handle Withdrawal
   const handleWithdraw = async (e) => {
     e.preventDefault()
+    if (withdrawLoading) return
     const amountNum = parseFloat(withdrawAmount)
     if (!amountNum || amountNum <= 0) {
       toast.error('Please enter a valid amount to withdraw')

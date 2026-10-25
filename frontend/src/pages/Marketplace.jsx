@@ -126,7 +126,7 @@ function CreateTaskModal({ onClose, onCreate }) {
   )
 }
 
-function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onWalletPay, onFeedback, currentUserId }) {
+function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onWalletPay, onFeedback, currentUserId, paying }) {
   const [submitNotes, setSubmitNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [feedback, setFeedback] = useState({ rating: 5, review: '' })
@@ -202,11 +202,20 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onWalletPay
 
           {task.status === 'submitted' && isPoster && (
             <div className="space-y-3">
-              <button onClick={() => onPay(task)} className="btn-primary w-full inline-flex items-center justify-center gap-2">
-                <CheckCircle2 size={16} />
+              <button
+                onClick={() => onPay(task)}
+                disabled={paying}
+                className="btn-primary w-full inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {paying ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                 Pay via Razorpay
               </button>
-              <button onClick={() => onWalletPay(task)} className="btn-secondary w-full inline-flex items-center justify-center gap-2">
+              <button
+                onClick={() => onWalletPay(task)}
+                disabled={paying}
+                className="btn-secondary w-full inline-flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {paying ? <Loader2 size={16} className="animate-spin" /> : null}
                 Use Wallet Credit
               </button>
               <div className="rounded-xl border border-surface-border bg-surface-hover p-4 text-xs text-gray-400">
@@ -483,6 +492,7 @@ export default function Marketplace() {
           onWalletPay={handleWalletPay}
           onFeedback={handleFeedback}
           currentUserId={user?.id}
+          paying={Boolean(payingTaskId)}
         />
       )}
     </div>

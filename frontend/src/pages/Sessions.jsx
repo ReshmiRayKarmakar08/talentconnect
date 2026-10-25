@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Calendar, Video, Star, CheckCircle, XCircle, Clock, Loader2, Plus, Search, BookOpen } from 'lucide-react'
+import {
+  Calendar, Video, Star, CheckCircle, XCircle, Clock, Loader2, Plus,
+  Search, BookOpen, Wallet, CreditCard, ShieldCheck, AlertCircle, X
+} from 'lucide-react'
 import { sessionsAPI, skillsAPI, paymentsAPI } from '../utils/api'
 import toast from 'react-hot-toast'
 import useAuthStore from '../store/authStore'
@@ -10,12 +13,13 @@ const statusColors = {
   completed: 'badge-green', cancelled: 'badge-red',
 }
 
-function SessionCard({ session, userId, onConfirm, onCancel, onComplete, onFeedback }) {
+function SessionCard({ session, userId, onConfirm, onCancel, onComplete, onFeedback, actionLoadingId }) {
   const isMentor = session.mentor?.id === userId
   const isLearner = session.learner?.id === userId
   const isPending = session.status === 'pending'
   const isConfirmed = session.status === 'confirmed'
   const isCompleted = session.status === 'completed'
+  const isCurrentAction = actionLoadingId === session.id
 
   return (
     <div className="card p-5 hover:border-brand-500/20 transition-all">
@@ -48,13 +52,21 @@ function SessionCard({ session, userId, onConfirm, onCancel, onComplete, onFeedb
 
       <div className="flex flex-wrap gap-2">
         {isMentor && isPending && (
-          <button onClick={() => onConfirm(session.id)} className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1">
-            <CheckCircle size={12} /> Confirm
+          <button
+            onClick={() => onConfirm(session.id)}
+            disabled={isCurrentAction}
+            className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1 disabled:opacity-50"
+          >
+            {isCurrentAction ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />} Confirm
           </button>
         )}
         {isMentor && isConfirmed && (
-          <button onClick={() => onComplete(session.id)} className="btn-primary text-xs px-3 py-1.5">
-            Mark Complete
+          <button
+            onClick={() => onComplete(session.id)}
+            disabled={isCurrentAction}
+            className="btn-primary text-xs px-3 py-1.5 flex items-center gap-1 disabled:opacity-50"
+          >
+            {isCurrentAction ? <Loader2 size={12} className="animate-spin" /> : null} Mark Complete
           </button>
         )}
         {isCompleted && isLearner && !session.feedback && (
@@ -65,9 +77,10 @@ function SessionCard({ session, userId, onConfirm, onCancel, onComplete, onFeedb
         {(isPending || isConfirmed) && (
           <button
             onClick={() => onCancel(session.id)}
-            className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all"
+            disabled={isCurrentAction}
+            className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all disabled:opacity-50 flex items-center gap-1"
           >
-            <XCircle size={12} className="inline mr-1" /> Cancel
+            {isCurrentAction ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Cancel
           </button>
         )}
       </div>
@@ -233,105 +246,189 @@ function BookSessionModal({ mentor, onClose, onBooked }) {
   )
 }
 
-function PaymentModal({ amount, walletBalance, onConfirm, onClose }) {
+const ensureRazorpayLoaded = () => {
+  return new Promise((resolve) => {
+    if (typeof window !== 'undefined' && window.Razorpay) {
+      return resolve(true)
+    }
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
+
+function PaymentModal({ pendingBooking, amount, walletBalance, isProcessing, onConfirm, onClose }) {
   const [method, setMethod] = useState('wallet')
   const formattedAmount = `₹${amount.toFixed(2)}`
+  const hasSufficientBalance = walletBalance >= amount
+  const mentorName = pendingBooking?.mentor?.user?.full_name || 'Mentor'
+  const skillName = pendingBooking?.mentor?.user_skill?.skill?.name || 'Session'
+  const scheduledTime = pendingBooking?.form?.scheduled_at
+    ? new Date(pendingBooking.form.scheduled_at).toLocaleString([], {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      })
+    : ''
+  const duration = pendingBooking?.form?.duration_minutes || 60
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="card w-full max-w-3xl overflow-hidden">
-        <div className="grid md:grid-cols-[240px_1fr]">
-          <div className="border-r border-surface-border bg-surface-hover p-5">
-            <p className="text-xs text-gray-500 uppercase tracking-[0.2em]">Payment Method</p>
-            <div className="mt-4 space-y-2">
-              {['card', 'netbanking', 'wallet', 'upi'].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setMethod(item)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    method === item ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  {item === 'card' && 'Credit / Debit Card'}
-                  {item === 'netbanking' && 'Netbanking'}
-                  {item === 'wallet' && 'Wallet'}
-                  {item === 'upi' && 'UPI'}
-                </button>
-              ))}
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="card w-full max-w-xl overflow-hidden border-surface-border bg-[#121624] shadow-2xl">
+        {/* Modal Header */}
+        <div className="p-6 border-b border-surface-border flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-white font-display">Confirm & Pay for Session</h2>
+            <p className="text-xs text-gray-400 mt-1">
+              {skillName} with <span className="text-brand-300 font-medium">{mentorName}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isProcessing}
+            className="text-gray-400 hover:text-white transition-colors disabled:opacity-40 p-1"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Session details overview */}
+        <div className="px-6 py-3.5 bg-surface-hover/70 border-b border-surface-border flex flex-wrap items-center justify-between gap-3 text-xs text-gray-300">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5 text-gray-400">
+              <Calendar size={13} className="text-brand-400" />
+              {scheduledTime}
+            </span>
+            <span className="flex items-center gap-1.5 text-gray-400">
+              <Clock size={13} className="text-brand-400" />
+              {duration} minutes
+            </span>
+          </div>
+          <div className="text-right">
+            <span className="text-gray-400 mr-2">Total:</span>
+            <span className="text-base font-bold text-white font-display">{formattedAmount}</span>
+          </div>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Choose Payment Method
+          </p>
+
+          {/* Option 1: TalentConnect Wallet */}
+          <div
+            onClick={() => !isProcessing && setMethod('wallet')}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+              method === 'wallet'
+                ? 'border-brand-500 bg-brand-500/10 shadow-sm shadow-brand-500/10 ring-1 ring-brand-500'
+                : 'border-surface-border bg-surface-hover hover:border-gray-600'
+            } ${isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  method === 'wallet' ? 'bg-brand-500 text-white' : 'bg-surface-border text-gray-400'
+                }`}>
+                  <Wallet size={20} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-white text-sm">TalentConnect Wallet</p>
+                    <span className="badge badge-blue text-[10px] py-0.5">Instant Booking</span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Current balance: <span className="font-semibold text-gray-200">₹{walletBalance.toFixed(2)}</span>
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                {amount === 0 ? (
+                  <span className="badge badge-green text-xs">Free</span>
+                ) : hasSufficientBalance ? (
+                  <span className="badge badge-green text-xs">Sufficient</span>
+                ) : (
+                  <span className="badge badge-yellow text-xs">Needs ₹{(amount - walletBalance).toFixed(2)} more</span>
+                )}
+              </div>
             </div>
-            <p className="mt-6 text-xs text-gray-500">Amount payable</p>
-            <p className="text-xl font-semibold text-white">{formattedAmount}</p>
+
+            {method === 'wallet' && !hasSufficientBalance && amount > 0 && (
+              <div className="mt-3 pt-3 border-t border-yellow-500/20 text-xs text-yellow-300/90 flex items-start gap-2">
+                <AlertCircle size={14} className="shrink-0 text-yellow-400 mt-0.5" />
+                <span>
+                  Insufficient balance. You can switch to Razorpay Gateway below to pay directly with UPI, Cards, or Netbanking.
+                </span>
+              </div>
+            )}
           </div>
 
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-white">Pay with {method.toUpperCase()}</h3>
-
-            {method === 'card' && (
-              <div className="mt-4 space-y-3">
+          {/* Option 2: Razorpay Gateway */}
+          <div
+            onClick={() => !isProcessing && setMethod('razorpay')}
+            className={`p-4 rounded-xl border transition-all cursor-pointer ${
+              method === 'razorpay'
+                ? 'border-brand-500 bg-brand-500/10 shadow-sm shadow-brand-500/10 ring-1 ring-brand-500'
+                : 'border-surface-border bg-surface-hover hover:border-gray-600'
+            } ${isProcessing ? 'opacity-60 cursor-not-allowed' : ''}`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  method === 'razorpay' ? 'bg-indigo-600 text-white' : 'bg-surface-border text-gray-400'
+                }`}>
+                  <CreditCard size={20} />
+                </div>
                 <div>
-                  <label className="label">Card Number</label>
-                  <input className="input" placeholder="4111 1111 1111 1111" />
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="label">Expiry</label>
-                    <input className="input" placeholder="MM/YY" />
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-white text-sm">Razorpay Gateway</p>
+                    <span className="badge badge-green text-[10px] py-0.5">UPI • Cards • Netbanking</span>
                   </div>
-                  <div>
-                    <label className="label">CVV</label>
-                    <input className="input" placeholder="123" />
-                  </div>
-                  <div>
-                    <label className="label">Name</label>
-                    <input className="input" placeholder="Cardholder" />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500">Test mode only. No real charges will be made.</p>
-              </div>
-            )}
-
-            {method === 'netbanking' && (
-              <div className="mt-4 space-y-3">
-                <label className="label">Select Bank</label>
-                <select className="input">
-                  <option>HDFC Bank</option>
-                  <option>ICICI Bank</option>
-                  <option>State Bank of India</option>
-                  <option>Axis Bank</option>
-                  <option>Kotak Mahindra</option>
-                </select>
-                <p className="text-xs text-gray-500">Test mode only. This simulates a netbanking flow.</p>
-              </div>
-            )}
-
-            {method === 'wallet' && (
-              <div className="mt-4 space-y-3 text-sm text-gray-400">
-                <p>Wallet balance: ₹{walletBalance.toFixed(2)}</p>
-                <p>Use wallet credits to confirm this session instantly.</p>
-              </div>
-            )}
-
-            {method === 'upi' && (
-              <div className="mt-4 grid gap-3 md:grid-cols-[120px_1fr] items-center">
-                <div className="h-28 w-28 rounded-xl border border-white/10 bg-[linear-gradient(135deg,#1a2034,#0f121d)] flex items-center justify-center text-[10px] text-gray-400">
-                  UPI QR
-                </div>
-                <div className="space-y-2 text-sm text-gray-400">
-                  <div>
-                    <label className="label">UPI ID</label>
-                    <input className="input" placeholder="talentconnect@upi" />
-                  </div>
-                  <p>Apps supported: GPay, PhonePe, Paytm</p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Pay directly with Google Pay, PhonePe, Paytm, Cards, or Netbanking
+                  </p>
                 </div>
               </div>
-            )}
-
-            <div className="mt-6 flex gap-3">
-              <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
-              <button onClick={() => onConfirm(method)} className="btn-primary flex-1">
-                Pay Now
-              </button>
+              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
+                <ShieldCheck size={16} />
+                <span>Secured</span>
+              </div>
             </div>
+          </div>
+
+          {/* Modal Action Buttons */}
+          <div className="pt-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isProcessing}
+              className="btn-secondary flex-1 py-3 text-sm disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => onConfirm(method)}
+              disabled={isProcessing || (method === 'wallet' && !hasSufficientBalance && amount > 0)}
+              className="btn-primary flex-1 py-3 text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : method === 'wallet' ? (
+                !hasSufficientBalance && amount > 0 ? (
+                  'Insufficient Wallet Balance'
+                ) : (
+                  `Pay ${formattedAmount} with Wallet`
+                )
+              ) : (
+                `Pay ${formattedAmount} via Razorpay`
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -355,6 +452,8 @@ export default function Sessions() {
   const [loading, setLoading] = useState(true)
   const [feedbackSession, setFeedbackSession] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [actionLoadingId, setActionLoadingId] = useState(null)
 
   useEffect(() => {
     Promise.all([
@@ -389,22 +488,52 @@ export default function Sessions() {
   const filtered = filter === 'all' ? sessions : sessions.filter(s => s.status === filter)
 
   const handleConfirm = async (id) => {
-    try { const {data} = await sessionsAPI.confirm(id); setSessions(sessions.map(s => s.id === id ? data : s)); toast.success('Session confirmed!') }
-    catch { toast.error('Failed') }
+    if (actionLoadingId) return
+    setActionLoadingId(id)
+    try {
+      const { data } = await sessionsAPI.confirm(id)
+      setSessions(sessions.map(s => s.id === id ? data : s))
+      toast.success('Session confirmed!')
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to confirm session')
+    } finally {
+      setActionLoadingId(null)
+    }
   }
+
   const handleCancel = async (id) => {
+    if (actionLoadingId) return
     const reason = prompt('Reason for cancellation?')
     if (!reason) return
-    try { const {data} = await sessionsAPI.cancel(id, {reason}); setSessions(sessions.map(s => s.id === id ? data : s)); toast.success('Cancelled') }
-    catch { toast.error('Failed') }
+    setActionLoadingId(id)
+    try {
+      const { data } = await sessionsAPI.cancel(id, { reason })
+      setSessions(sessions.map(s => s.id === id ? data : s))
+      toast.success('Session cancelled')
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to cancel session')
+    } finally {
+      setActionLoadingId(null)
+    }
   }
+
   const handleComplete = async (id) => {
-    try { const {data} = await sessionsAPI.complete(id); setSessions(sessions.map(s => s.id === id ? data : s)); toast.success('Session completed!') }
-    catch { toast.error('Failed') }
+    if (actionLoadingId) return
+    setActionLoadingId(id)
+    try {
+      const { data } = await sessionsAPI.complete(id)
+      setSessions(sessions.map(s => s.id === id ? data : s))
+      toast.success('Session completed!')
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Failed to complete session')
+    } finally {
+      setActionLoadingId(null)
+    }
   }
+
   const handleFeedback = async (sessionId, data) => {
     await sessionsAPI.feedback(sessionId, data)
-    setSessions(sessions.map(s => s.id === sessionId ? {...s, feedback: data} : s))
+    setSessions(sessions.map(s => s.id === sessionId ? { ...s, feedback: data } : s))
   }
 
   const handleBooked = (payload) => {
@@ -413,30 +542,130 @@ export default function Sessions() {
   }
 
   const handlePaymentConfirm = async (method) => {
-    if (!pendingBooking) return
+    if (isProcessing || !pendingBooking) return
+    setIsProcessing(true)
+
     const rate = pendingBooking.mentor.user_skill.hourly_rate || 0
     const amount = (rate * pendingBooking.form.duration_minutes) / 60
-    if (method === 'wallet' && walletBalance < amount) {
-      toast.error('Insufficient wallet balance')
-      return
-    }
-    try {
-      if (amount > 0 && method === 'wallet') {
-        const { data: wallet } = await paymentsAPI.walletDebit({
-          amount,
-          description: `Session booking with ${pendingBooking.mentor.user.full_name}`,
-          reference_id: `session-${pendingBooking.mentor.user.id}`,
-        })
-        setWalletBalance(wallet.balance)
+
+    if (method === 'wallet') {
+      if (amount > 0 && walletBalance < amount) {
+        toast.error('Insufficient wallet balance. Please pay via Razorpay or top up your wallet.')
+        setIsProcessing(false)
+        return
       }
-      const { data } = await sessionsAPI.book(pendingBooking.form)
-      setSessions((prev) => [data, ...prev])
-      setFilter('all')
-      toast.success('Session booked successfully')
-      setShowPayment(false)
-      setPendingBooking(null)
-    } catch (e) {
-      toast.error(e.response?.data?.detail || 'Payment failed')
+
+      const bookingToast = toast.loading('Booking session with wallet...')
+      try {
+        const { data: bookedSession } = await sessionsAPI.bookWallet(pendingBooking.form)
+        try {
+          const { data: wRes } = await paymentsAPI.wallet()
+          setWalletBalance(wRes.balance)
+        } catch {}
+
+        setSessions((prev) => [bookedSession, ...prev])
+        setFilter('all')
+        toast.success('Session booked and confirmed with wallet!', { id: bookingToast })
+        setShowPayment(false)
+        setPendingBooking(null)
+      } catch (err) {
+        toast.error(err.response?.data?.detail || 'Failed to book session', { id: bookingToast })
+      } finally {
+        setIsProcessing(false)
+      }
+    } else if (method === 'razorpay') {
+      const orderToast = toast.loading('Preparing Razorpay checkout...')
+      try {
+        const isLoaded = await ensureRazorpayLoaded()
+        if (!isLoaded || !window.Razorpay) {
+          toast.error('Could not load Razorpay payment gateway', { id: orderToast })
+          setIsProcessing(false)
+          return
+        }
+
+        const { data: order } = await paymentsAPI.sessionOrder({
+          mentor_id: pendingBooking.form.mentor_id,
+          skill_id: pendingBooking.form.skill_id,
+          duration_minutes: pendingBooking.form.duration_minutes,
+        })
+        toast.dismiss(orderToast)
+
+        const logoUrl = typeof window !== 'undefined'
+          ? `${window.location.origin}/logo.png`
+          : 'https://talentconnect-web.vercel.app/logo.png'
+
+        const options = {
+          key: order.key_id,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'TalentConnect',
+          description: `Session with ${pendingBooking.mentor.user.full_name}`,
+          image: logoUrl,
+          prefill: {
+            name: user?.full_name || '',
+            email: user?.email || '',
+            contact: user?.phone || '',
+          },
+          theme: {
+            color: '#4f52e5',
+          },
+          handler: async (response) => {
+            const verifyToast = toast.loading('Verifying payment & confirming session...')
+            try {
+              const { data: bookedSession } = await paymentsAPI.sessionVerify({
+                razorpay_order_id: response.razorpay_order_id || order.order_id || '',
+                razorpay_payment_id: response.razorpay_payment_id || `pay_${Date.now()}`,
+                razorpay_signature: response.razorpay_signature || '',
+                mentor_id: pendingBooking.form.mentor_id,
+                skill_id: pendingBooking.form.skill_id,
+                scheduled_at: pendingBooking.form.scheduled_at,
+                duration_minutes: pendingBooking.form.duration_minutes,
+                notes: pendingBooking.form.notes,
+              })
+
+              try {
+                const { data: wRes } = await paymentsAPI.wallet()
+                setWalletBalance(wRes.balance)
+              } catch {}
+
+              setSessions((prev) => [bookedSession, ...prev])
+              setFilter('all')
+              toast.success('Payment verified & session booked successfully!', { id: verifyToast })
+              setShowPayment(false)
+              setPendingBooking(null)
+            } catch (vErr) {
+              toast.error(vErr.response?.data?.detail || 'Payment verification failed', { id: verifyToast })
+            } finally {
+              setIsProcessing(false)
+            }
+          },
+          modal: {
+            ondismiss: () => {
+              setIsProcessing(false)
+              toast('Payment window closed. You can try again.')
+            },
+          },
+        }
+
+        if (
+          order.order_id &&
+          order.order_id.startsWith('order_') &&
+          !order.order_id.startsWith('test_') &&
+          !order.order_id.startsWith('sandbox_')
+        ) {
+          options.order_id = order.order_id
+        }
+
+        const rzp = new window.Razorpay(options)
+        rzp.on('payment.failed', (resp) => {
+          setIsProcessing(false)
+          toast.error(resp.error?.description || 'Payment failed')
+        })
+        rzp.open()
+      } catch (err) {
+        setIsProcessing(false)
+        toast.error(err.response?.data?.detail || 'Failed to initiate Razorpay payment', { id: orderToast })
+      }
     }
   }
 
@@ -529,6 +758,7 @@ export default function Sessions() {
               key={s.id}
               session={s}
               userId={user?.id}
+              actionLoadingId={actionLoadingId}
               onConfirm={handleConfirm}
               onCancel={handleCancel}
               onComplete={handleComplete}
@@ -556,12 +786,16 @@ export default function Sessions() {
 
       {showPayment && pendingBooking && (
         <PaymentModal
+          pendingBooking={pendingBooking}
           amount={(pendingBooking.mentor.user_skill.hourly_rate || 0) * pendingBooking.form.duration_minutes / 60}
           walletBalance={walletBalance}
+          isProcessing={isProcessing}
           onConfirm={handlePaymentConfirm}
           onClose={() => {
-            setShowPayment(false)
-            setPendingBooking(null)
+            if (!isProcessing) {
+              setShowPayment(false)
+              setPendingBooking(null)
+            }
           }}
         />
       )}

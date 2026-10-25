@@ -2,8 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 import secrets
+import time
 
 from app.models.models import LearningSession, SessionFeedback, SessionStatus, FraudLog, User, UserSkill, Wallet, Transaction, Notification
 from app.schemas.schemas import SessionCreate, SessionFeedbackCreate
@@ -14,7 +15,91 @@ def _generate_meet_link() -> str:
     return f"https://meet.google.com/{code[:4]}-{code[4:8]}-{code[8:]}"
 
 
+async def check_duplicate_session(
+    db: AsyncSession, learner_id: int, mentor_id: int, scheduled_at: datetime
+) -> None:
+    # Check if a session already exists for the exact same mentor and time slot
+    existing = await db.execute(
+        select(LearningSession).where(
+            LearningSession.mentor_id == mentor_id,
+            LearningSession.learner_id == learner_id,
+            LearningSession.scheduled_at == scheduled_at,
+            LearningSession.status.in_([SessionStatus.pending, SessionStatus.confirmed]),
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise ValueError("You already have an active session scheduled with this mentor at this time.")
+
+    # Prevent accidental double-clicks within the last 15 seconds
+    recent = await db.execute(
+        select(LearningSession).where(
+            LearningSession.mentor_id == mentor_id,
+            LearningSession.learner_id == learner_id,
+            LearningSession.created_at >= datetime.utcnow() - timedelta(seconds=15),
+            LearningSession.status.in_([SessionStatus.pending, SessionStatus.confirmed]),
+        )
+    )
+    if recent.scalar_one_or_none():
+        raise ValueError("A booking request was just submitted. Please wait a moment.")
+
+
 async def create_session(db: AsyncSession, learner_id: int, data: SessionCreate) -> LearningSession:
+    await check_duplicate_session(db, learner_id, data.mentor_id, data.scheduled_at)
+
+    session = LearningSession(
+        mentor_id=data.mentor_id,
+        learner_id=learner_id,
+        skill_id=data.skill_id,
+        scheduled_at=data.scheduled_at,
+        duration_minutes=data.duration_minutes,
+        notes=data.notes,
+        meet_link=_generate_meet_link(),
+    )
+    db.add(session)
+    await db.commit()
+    return await get_session_by_id(db, session.id)
+
+
+async def book_session_with_wallet(db: AsyncSession, learner_id: int, data: SessionCreate) -> LearningSession:
+    await check_duplicate_session(db, learner_id, data.mentor_id, data.scheduled_at)
+
+    # Calculate session cost based on mentor's hourly rate
+    user_skill_result = await db.execute(
+        select(UserSkill).where(
+            UserSkill.user_id == data.mentor_id,
+            UserSkill.skill_id == data.skill_id,
+        )
+    )
+    user_skill = user_skill_result.scalar_one_or_none()
+    hourly_rate = user_skill.hourly_rate if user_skill else 0
+    amount = round((hourly_rate * data.duration_minutes) / 60, 2) if hourly_rate else 0
+
+    if amount > 0:
+        wallet_result = await db.execute(select(Wallet).where(Wallet.user_id == learner_id))
+        wallet = wallet_result.scalar_one_or_none()
+        if not wallet:
+            wallet = Wallet(user_id=learner_id)
+            db.add(wallet)
+            await db.flush()
+
+        if wallet.balance < amount:
+            raise ValueError(f"Insufficient wallet balance. Session costs ₹{amount:.2f}, but your available balance is ₹{wallet.balance:.2f}.")
+
+        wallet.balance -= amount
+        wallet.total_spent += amount
+
+        mentor_result = await db.execute(select(User).where(User.id == data.mentor_id))
+        mentor = mentor_result.scalar_one_or_none()
+        mentor_name = mentor.full_name if mentor else "Mentor"
+
+        db.add(Transaction(
+            wallet_id=wallet.id,
+            amount=amount,
+            transaction_type="debit",
+            description=f"Session booking with {mentor_name}",
+            reference_id=f"sess_{int(time.time())}_{secrets.token_hex(3)}",
+        ))
+
     session = LearningSession(
         mentor_id=data.mentor_id,
         learner_id=learner_id,

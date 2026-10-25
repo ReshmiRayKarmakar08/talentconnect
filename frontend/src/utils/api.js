@@ -145,6 +145,7 @@ export const skillsAPI = {
 
 export const sessionsAPI = {
   book:       (d)  => api.post('/sessions/', d),
+  bookWallet: (d)  => api.post('/sessions/book-wallet', d),
   my:         ()   => api.get('/sessions/my'),
   get:        (id) => api.get(`/sessions/${id}`),
   confirm:    (id) => api.post(`/sessions/${id}/confirm`),
@@ -176,6 +177,8 @@ export const paymentsAPI = {
   topupOrder:    (d) => api.post('/payments/topup/order', d),
   topupVerify:   (d) => api.post('/payments/topup/verify', d),
   withdraw:      (d) => api.post('/payments/withdraw', d),
+  sessionOrder:  (d) => api.post('/payments/session/order', d),
+  sessionVerify: (d) => api.post('/payments/session/verify', d),
 }
 
 export const aiAPI = {

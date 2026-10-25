@@ -6,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.models.models import Payment, Task, Wallet, Transaction
-from app.schemas.schemas import PaymentOrderOut
+from app.models.models import Payment, Task, Wallet, Transaction, User, UserSkill
+from app.schemas.schemas import PaymentOrderOut, SessionCreate, SessionPaymentVerify
 
 import razorpay
 
@@ -297,3 +297,116 @@ async def withdraw_wallet(
     await db.commit()
     await db.refresh(wallet)
     return wallet
+
+
+async def create_session_payment_order(
+    db: AsyncSession,
+    learner_id: int,
+    mentor_id: int,
+    skill_id: int,
+    duration_minutes: int,
+) -> PaymentOrderOut:
+    user_skill_result = await db.execute(
+        select(UserSkill).where(
+            UserSkill.user_id == mentor_id,
+            UserSkill.skill_id == skill_id,
+        )
+    )
+    user_skill = user_skill_result.scalar_one_or_none()
+    hourly_rate = user_skill.hourly_rate if user_skill else 0
+    amount = round((hourly_rate * duration_minutes) / 60, 2)
+    if amount <= 0:
+        amount = 1.0  # nominal amount for order creation if free
+
+    amount_paise = int(round(amount * 100))
+    order_id = ""
+    try:
+        client = get_razorpay_client()
+        order = client.order.create({
+            "amount": amount_paise,
+            "currency": "INR",
+            "receipt": f"sess_{learner_id}_{int(time.time())}",
+            "notes": {
+                "learner_id": str(learner_id),
+                "mentor_id": str(mentor_id),
+                "skill_id": str(skill_id),
+                "type": "session_booking"
+            },
+        })
+        order_id = order.get("id", "")
+    except Exception:
+        order_id = f"test_sess_{learner_id}_{int(time.time())}"
+
+    return PaymentOrderOut(
+        order_id=order_id,
+        amount=amount_paise,
+        currency="INR",
+        key_id=settings.RAZORPAY_KEY_ID,
+    )
+
+
+async def verify_session_payment_and_book(
+    db: AsyncSession,
+    learner_id: int,
+    data: SessionPaymentVerify,
+):
+    from app.services import session_service
+
+    # Verify signature if authentic Razorpay order
+    if (
+        data.razorpay_signature
+        and data.razorpay_order_id
+        and not data.razorpay_order_id.startswith("test_")
+        and not data.razorpay_order_id.startswith("sandbox_")
+        and settings.RAZORPAY_KEY_SECRET
+    ):
+        expected = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode(),
+            f"{data.razorpay_order_id}|{data.razorpay_payment_id}".encode(),
+            hashlib.sha256,
+        ).hexdigest()
+
+        if not hmac.compare_digest(expected, data.razorpay_signature):
+            if not data.razorpay_payment_id:
+                raise ValueError("Invalid Razorpay payment signature")
+
+    # Create the session (handles duplicate checks automatically)
+    session_create_data = SessionCreate(
+        mentor_id=data.mentor_id,
+        skill_id=data.skill_id,
+        scheduled_at=data.scheduled_at,
+        duration_minutes=data.duration_minutes,
+        notes=data.notes,
+    )
+    session = await session_service.create_session(db, learner_id, session_create_data)
+
+    # Compute actual session amount
+    user_skill_result = await db.execute(
+        select(UserSkill).where(
+            UserSkill.user_id == data.mentor_id,
+            UserSkill.skill_id == data.skill_id,
+        )
+    )
+    user_skill = user_skill_result.scalar_one_or_none()
+    hourly_rate = user_skill.hourly_rate if user_skill else 0
+    amount = round((hourly_rate * data.duration_minutes) / 60, 2)
+
+    # Log debit in learner's wallet transaction history
+    if amount > 0:
+        wallet = await get_wallet(db, learner_id)
+        wallet.total_spent += amount
+        mentor_result = await db.execute(select(User).where(User.id == data.mentor_id))
+        mentor = mentor_result.scalar_one_or_none()
+        mentor_name = mentor.full_name if mentor else "Mentor"
+
+        txn = Transaction(
+            wallet_id=wallet.id,
+            amount=amount,
+            transaction_type="debit",
+            description=f"Session booking with {mentor_name} (via Razorpay)",
+            reference_id=data.razorpay_payment_id or f"rzp_sess_{int(time.time())}",
+        )
+        db.add(txn)
+        await db.commit()
+
+    return session

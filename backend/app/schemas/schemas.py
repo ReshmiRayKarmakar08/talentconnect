@@ -278,6 +278,28 @@ class WalletWithdrawRequest(BaseModel):
     upi_or_account: str = Field(..., min_length=3, max_length=100)
     notes: Optional[str] = None
 
+class SessionBookWalletRequest(BaseModel):
+    mentor_id: int
+    skill_id: int
+    scheduled_at: datetime
+    duration_minutes: int = Field(default=60, ge=30, le=180)
+    notes: Optional[str] = None
+
+class SessionOrderCreate(BaseModel):
+    mentor_id: int
+    skill_id: int
+    duration_minutes: int = Field(default=60, ge=30, le=180)
+
+class SessionPaymentVerify(BaseModel):
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+    mentor_id: int
+    skill_id: int
+    scheduled_at: datetime
+    duration_minutes: int = Field(default=60, ge=30, le=180)
+    notes: Optional[str] = None
+
 # ─── WALLET ──────────────────────────────────────────────────
 class WalletOut(BaseModel):
     balance: float

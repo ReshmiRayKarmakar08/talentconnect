@@ -19,15 +19,40 @@ async def book_session(
 ):
     if data.mentor_id == current_user.id:
         raise HTTPException(status_code=400, detail="You cannot book a session with yourself")
-    session = await session_service.create_session(db, current_user.id, data)
-    await create_notification(
-        db, data.mentor_id,
-        title="New Session Request",
-        message=f"{current_user.full_name} wants to book a learning session with you.",
-        notif_type="session",
-        metadata={"session_id": session.id},
-    )
-    return session
+    try:
+        session = await session_service.create_session(db, current_user.id, data)
+        await create_notification(
+            db, data.mentor_id,
+            title="New Session Request",
+            message=f"{current_user.full_name} wants to book a learning session with you.",
+            notif_type="session",
+            metadata={"session_id": session.id},
+        )
+        return session
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/book-wallet", response_model=SessionOut)
+async def book_session_wallet(
+    data: SessionCreate,
+    current_user=Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if data.mentor_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot book a session with yourself")
+    try:
+        session = await session_service.book_session_with_wallet(db, current_user.id, data)
+        await create_notification(
+            db, data.mentor_id,
+            title="New Session Request (Confirmed)",
+            message=f"{current_user.full_name} booked and paid for a session with you.",
+            notif_type="session",
+            metadata={"session_id": session.id},
+        )
+        return session
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/my", response_model=List[SessionOut])
