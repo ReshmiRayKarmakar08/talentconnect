@@ -44,7 +44,7 @@ export default function WalletPage() {
   // Filter
   const [filterType, setFilterType] = useState('all')
 
-  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SjgALiWCDFMzmo'
+  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TsDJgBLQkSlnbR'
 
   const fetchWalletData = async () => {
     try {
