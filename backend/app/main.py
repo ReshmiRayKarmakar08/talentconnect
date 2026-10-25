@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -5,15 +6,29 @@ from contextlib import asynccontextmanager
 
 from app.core.config import settings
 from app.db.session import init_db
-from app.api.routes import auth, users, skills, sessions, tasks, payments, ai, admin
+from app.api.routes import auth, users, skills, sessions, tasks, payments, ai, admin, health
+from app.services.health_service import run_keep_alive_worker
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup: initialize database schema & sample seeds
     await init_db()
+
+    # Layer 1: Start background keep-alive worker to periodically ping Supabase & Render
+    keep_alive_task = None
+    if settings.ENABLE_KEEP_ALIVE:
+        keep_alive_task = asyncio.create_task(run_keep_alive_worker())
+
     yield
-    # Shutdown (cleanup if needed)
+
+    # Shutdown: cleanly cancel keep-alive worker
+    if keep_alive_task and not keep_alive_task.done():
+        keep_alive_task.cancel()
+        try:
+            await keep_alive_task
+        except asyncio.CancelledError:
+            pass
 
 
 app = FastAPI(
@@ -45,6 +60,8 @@ app.add_middleware(
 )
 
 # ─── ROUTES ──────────────────────────────────────────────────
+app.include_router(health.router, prefix="/api")
+app.include_router(health.router)  # Also expose /health, /health/db, /health/ping at root level
 app.include_router(auth.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(skills.router, prefix="/api")
@@ -55,11 +72,6 @@ app.include_router(ai.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 
 
-@app.get("/api/health")
-async def health():
-    return {"status": "ok", "service": "TalentConnect API"}
-
-
 @app.get("/")
 async def root():
     return {
@@ -67,4 +79,5 @@ async def root():
         "service": "TalentConnect API",
         "docs": "/api/docs",
         "health": "/api/health",
+        "database_health": "/api/health/db",
     }

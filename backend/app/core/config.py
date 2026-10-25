@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
 
     FRONTEND_URL: str = "http://localhost:5173"
+    BACKEND_URL: str = "https://talentconnect-backend-qu3k.onrender.com"
+    RENDER_EXTERNAL_URL: Optional[str] = None
+    ENABLE_KEEP_ALIVE: bool = True
+    KEEP_ALIVE_INTERVAL_MINUTES: int = 9
 
     class Config:
         env_file = BASE_DIR / ".env"
