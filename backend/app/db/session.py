@@ -69,39 +69,183 @@ DEFAULT_SKILLS = [
 
 SAMPLE_MENTORS = [
     {
-        "email": "mentor.python@example.com",
-        "username": "aarav_python",
+        "email": "aarav.sharma.dev@gmail.com",
+        "username": "aarav_sharma",
         "full_name": "Aarav Sharma",
         "college": "IIT Delhi",
-        "reputation_score": 4.8,
-        "skills": [
-            ("Python", "advanced", 500),
-            ("FastAPI", "advanced", 650),
-            ("Data Science", "intermediate", 550),
-        ],
-    },
-    {
-        "email": "mentor.web@example.com",
-        "username": "riya_web",
-        "full_name": "Riya Verma",
-        "college": "NSUT Delhi",
-        "reputation_score": 4.6,
-        "skills": [
-            ("React", "advanced", 600),
-            ("JavaScript", "advanced", 450),
-            ("UI/UX Design", "intermediate", 500),
-        ],
-    },
-    {
-        "email": "mentor.dsa@example.com",
-        "username": "kabir_dsa",
-        "full_name": "Kabir Singh",
-        "college": "NIT Trichy",
+        "bio": "Full-stack engineer & Python specialist. 3+ years experience mentoring students in backend architectures and machine learning basics.",
         "reputation_score": 4.9,
         "skills": [
-            ("Data Structures", "advanced", 700),
-            ("Algorithms", "advanced", 700),
-            ("C++", "advanced", 550),
+            ("Python", "advanced", 450),
+            ("FastAPI", "advanced", 550),
+            ("Django", "advanced", 500),
+            ("Git & GitHub", "intermediate", 350),
+            ("Docker", "intermediate", 450),
+            ("Data Science", "intermediate", 500),
+            ("NumPy", "intermediate", 350),
+        ],
+    },
+    {
+        "email": "riya.verma.code@gmail.com",
+        "username": "riya_verma",
+        "full_name": "Riya Verma",
+        "college": "NSUT Delhi",
+        "bio": "Frontend developer specializing in React, Next.js, and sleek UI engineering with Tailwind CSS.",
+        "reputation_score": 4.8,
+        "skills": [
+            ("React", "advanced", 550),
+            ("Next.js", "advanced", 600),
+            ("JavaScript", "advanced", 400),
+            ("TypeScript", "advanced", 500),
+            ("HTML", "advanced", 250),
+            ("CSS", "advanced", 250),
+            ("Tailwind CSS", "advanced", 350),
+            ("UI/UX Design", "intermediate", 450),
+            ("Figma", "intermediate", 400),
+        ],
+    },
+    {
+        "email": "kabir.singh.tech@gmail.com",
+        "username": "kabir_singh",
+        "full_name": "Kabir Singh",
+        "college": "NIT Trichy",
+        "bio": "Competitive programmer & DSA mentor. 1000+ problems solved on LeetCode/Codeforces with focus on graph theory and dynamic programming.",
+        "reputation_score": 4.9,
+        "skills": [
+            ("Data Structures", "advanced", 600),
+            ("Algorithms", "advanced", 650),
+            ("C++", "advanced", 500),
+            ("Java", "advanced", 500),
+            ("DBMS", "intermediate", 400),
+            ("Android Development", "intermediate", 450),
+        ],
+    },
+    {
+        "email": "ananya.patel.ai@gmail.com",
+        "username": "ananya_patel",
+        "full_name": "Ananya Patel",
+        "college": "BITS Pilani",
+        "bio": "AI & Deep Learning researcher. Mentoring students in neural network architectures, computer vision, and data analysis pipelines.",
+        "reputation_score": 4.8,
+        "skills": [
+            ("Machine Learning", "advanced", 650),
+            ("Deep Learning", "advanced", 750),
+            ("Data Science", "advanced", 600),
+            ("Pandas", "advanced", 400),
+            ("NumPy", "advanced", 400),
+            ("Python", "advanced", 450),
+        ],
+    },
+    {
+        "email": "rohan.iyer.cloud@gmail.com",
+        "username": "rohan_iyer",
+        "full_name": "Rohan Iyer",
+        "college": "IIT Bombay",
+        "bio": "Cloud architect & DevOps enthusiast. Guiding students in AWS cloud services, containerization, and modern backend infrastructure.",
+        "reputation_score": 4.7,
+        "skills": [
+            ("AWS", "advanced", 650),
+            ("Docker", "advanced", 550),
+            ("Node.js", "advanced", 500),
+            ("PostgreSQL", "advanced", 450),
+            ("Git & GitHub", "advanced", 400),
+            ("FastAPI", "intermediate", 450),
+            ("Computer Networks", "intermediate", 400),
+        ],
+    },
+    {
+        "email": "neha.gupta.design@gmail.com",
+        "username": "neha_gupta",
+        "full_name": "Neha Gupta",
+        "college": "DTU Delhi",
+        "bio": "UI/UX & Product Designer. Passionate about design systems, Figma workflows, accessible user interfaces, and responsive web aesthetics.",
+        "reputation_score": 4.9,
+        "skills": [
+            ("UI/UX Design", "advanced", 500),
+            ("Figma", "advanced", 500),
+            ("HTML", "intermediate", 300),
+            ("CSS", "intermediate", 300),
+            ("Tailwind CSS", "intermediate", 350),
+        ],
+    },
+    {
+        "email": "aditya.kumar.db@gmail.com",
+        "username": "aditya_kumar",
+        "full_name": "Aditya Kumar",
+        "college": "IIIT Hyderabad",
+        "bio": "Database administrator and backend developer. Expert in query optimization, indexing, distributed SQL, and MongoDB schemas.",
+        "reputation_score": 4.8,
+        "skills": [
+            ("SQL", "advanced", 450),
+            ("PostgreSQL", "advanced", 500),
+            ("MongoDB", "advanced", 500),
+            ("DBMS", "advanced", 450),
+            ("Operating Systems", "intermediate", 400),
+            ("Django", "intermediate", 450),
+            ("Power BI", "intermediate", 400),
+        ],
+    },
+    {
+        "email": "priya.nair.app@gmail.com",
+        "username": "priya_nair",
+        "full_name": "Priya Nair",
+        "college": "VIT Vellore",
+        "bio": "Mobile app engineer with published Flutter and native Android applications on Google Play Store.",
+        "reputation_score": 4.7,
+        "skills": [
+            ("Flutter", "advanced", 550),
+            ("Android Development", "advanced", 550),
+            ("Java", "intermediate", 400),
+            ("JavaScript", "intermediate", 350),
+            ("Excel", "intermediate", 300),
+        ],
+    },
+    {
+        "email": "siddharth.joshi.core@gmail.com",
+        "username": "siddharth_joshi",
+        "full_name": "Siddharth Joshi",
+        "college": "IIT Roorkee",
+        "bio": "Core computer science mentor focusing on low-level systems, Operating Systems internals, Computer Networks, and C++ performance.",
+        "reputation_score": 4.8,
+        "skills": [
+            ("Computer Networks", "advanced", 450),
+            ("Operating Systems", "advanced", 500),
+            ("Data Structures", "advanced", 550),
+            ("C++", "advanced", 450),
+            ("Algorithms", "intermediate", 500),
+            ("AWS", "intermediate", 500),
+        ],
+    },
+    {
+        "email": "sneha.reddy.data@gmail.com",
+        "username": "sneha_reddy",
+        "full_name": "Sneha Reddy",
+        "college": "IIT Madras",
+        "bio": "Business intelligence consultant and data analyst. Specializes in Power BI enterprise dashboards, advanced Excel models, and SQL analytics.",
+        "reputation_score": 4.8,
+        "skills": [
+            ("Power BI", "advanced", 450),
+            ("Excel", "advanced", 350),
+            ("SQL", "intermediate", 400),
+            ("Data Science", "intermediate", 500),
+            ("Pandas", "intermediate", 350),
+            ("Deep Learning", "intermediate", 600),
+        ],
+    },
+    {
+        "email": "vikram.malhotra.dev@gmail.com",
+        "username": "vikram_malhotra",
+        "full_name": "Vikram Malhotra",
+        "college": "Thapar University",
+        "bio": "Full-stack JavaScript engineer. Expert in Next.js App Router, SSR, RESTful APIs with Node.js, and full-stack TypeScript apps.",
+        "reputation_score": 4.7,
+        "skills": [
+            ("Next.js", "advanced", 550),
+            ("Node.js", "advanced", 500),
+            ("TypeScript", "intermediate", 450),
+            ("React", "intermediate", 450),
+            ("MongoDB", "intermediate", 400),
+            ("Flutter", "intermediate", 450),
         ],
     },
 ]
@@ -109,45 +253,51 @@ SAMPLE_MENTORS = [
 SAMPLE_TASKS = [
     {
         "title": "Debug Python sorting assignment",
-        "description": "Need help optimizing a sorting assignment with time complexity explanation.",
+        "description": "Need help optimizing a sorting assignment with time complexity explanation and quicksort implementation.",
         "subject": "Data Structures",
         "budget": 150,
         "deadline_days": 3,
+        "poster_email": "rahul.verma.student@gmail.com",
     },
     {
-        "title": "Create React landing page",
-        "description": "Build a responsive landing page with Tailwind and reusable components.",
-        "subject": "Web Development",
-        "budget": 300,
-        "deadline_days": 5,
-    },
-    {
-        "title": "SQL query practice set",
-        "description": "Need help writing joins and aggregate queries for a practice set.",
-        "subject": "Database",
-        "budget": 200,
-        "deadline_days": 4,
-    },
-    {
-        "title": "Design a UI kit for student dashboard",
-        "description": "Create a cohesive UI kit with buttons, cards, and form styles for a student platform.",
-        "subject": "UI/UX Design",
-        "budget": 250,
-        "deadline_days": 6,
-    },
-    {
-        "title": "Build a Node.js REST API starter",
-        "description": "Need a boilerplate with auth, CRUD routes, and basic validation.",
+        "title": "Create Next.js landing page with Tailwind",
+        "description": "Build a responsive landing page with Next.js, modern dark mode, and reusable UI components.",
         "subject": "Web Development",
         "budget": 350,
         "deadline_days": 5,
+        "poster_email": "riya.verma.code@gmail.com",
     },
     {
-        "title": "Data cleanup for analytics report",
-        "description": "Clean CSV data, remove duplicates, and summarize metrics in a short report.",
+        "title": "SQL query practice set & index optimization",
+        "description": "Need guidance writing multi-table JOINs, subqueries, and optimizing indexes on PostgreSQL database.",
+        "subject": "Database",
+        "budget": 200,
+        "deadline_days": 4,
+        "poster_email": "rahul.verma.student@gmail.com",
+    },
+    {
+        "title": "Design a Figma UI kit for student dashboard",
+        "description": "Create a clean, accessible UI design system in Figma with buttons, cards, modal dialogs, and navigation.",
+        "subject": "UI/UX Design",
+        "budget": 250,
+        "deadline_days": 6,
+        "poster_email": "neha.gupta.design@gmail.com",
+    },
+    {
+        "title": "Build a Node.js REST API with JWT Auth",
+        "description": "Need a clean Express/Node.js starter project with JWT authentication, middleware, and MongoDB integration.",
+        "subject": "Web Development",
+        "budget": 300,
+        "deadline_days": 5,
+        "poster_email": "vikram.malhotra.dev@gmail.com",
+    },
+    {
+        "title": "Pandas data cleanup & visualization for analytics",
+        "description": "Clean CSV dataset with missing values, format dates, and generate summary charts using Pandas and Matplotlib.",
         "subject": "Data Science",
         "budget": 180,
         "deadline_days": 3,
+        "poster_email": "sneha.reddy.data@gmail.com",
     },
 ]
 
@@ -172,7 +322,11 @@ async def init_db():
 
     async with AsyncSessionLocal() as session:
         from app.core.security import get_password_hash
-        from app.models.models import Skill, User, UserSkill, VerificationStatus, SkillLevel, Wallet, Transaction, Task, UserRole, LearningSession, SessionStatus
+        from app.models.models import (
+            Skill, User, UserSkill, VerificationStatus, SkillLevel,
+            Wallet, Transaction, Task, UserRole, LearningSession,
+            SessionStatus, SessionFeedback, TaskStatus
+        )
         from datetime import datetime, timedelta
 
         existing_result = await session.execute(select(Skill))
@@ -194,6 +348,54 @@ async def init_db():
         existing_user_result = await session.execute(select(User))
         existing_users = {user.email.lower(): user for user in existing_user_result.scalars().all()}
 
+        # Migrate old demo users with @example.com to authentic Indian @gmail.com users
+        legacy_migrations = {
+            "mentor.python@example.com": {
+                "email": "aarav.sharma.dev@gmail.com",
+                "username": "aarav_sharma",
+                "full_name": "Aarav Sharma",
+                "college": "IIT Delhi",
+            },
+            "mentor.web@example.com": {
+                "email": "riya.verma.code@gmail.com",
+                "username": "riya_verma",
+                "full_name": "Riya Verma",
+                "college": "NSUT Delhi",
+            },
+            "mentor.dsa@example.com": {
+                "email": "kabir.singh.tech@gmail.com",
+                "username": "kabir_singh",
+                "full_name": "Kabir Singh",
+                "college": "NIT Trichy",
+            },
+            "learner.demo@example.com": {
+                "email": "rahul.verma.student@gmail.com",
+                "username": "rahul_verma",
+                "full_name": "Rahul Verma",
+                "college": "Delhi Technological University",
+            },
+        }
+        for old_email, new_data in legacy_migrations.items():
+            old_user = existing_users.get(old_email.lower())
+            target_user = existing_users.get(new_data["email"].lower())
+            if old_user and not target_user:
+                old_user.email = new_data["email"]
+                old_user.username = new_data["username"]
+                old_user.full_name = new_data["full_name"]
+                old_user.college = new_data["college"]
+                old_user.is_verified = True
+                existing_users[new_data["email"].lower()] = old_user
+                del existing_users[old_email.lower()]
+            elif old_user and target_user and old_user.id != target_user.id:
+                old_user.email = f"archived_{old_user.id}@gmail.com"
+
+        # Update any remaining @example.com accounts to @gmail.com
+        for u in existing_users.values():
+            if u.email.endswith("@example.com"):
+                prefix = u.email.split("@")[0].replace(".", "_")
+                u.email = f"{prefix}.tc@gmail.com"
+
+        # Seed/update all mentors and their skills
         for mentor_data in SAMPLE_MENTORS:
             mentor = existing_users.get(mentor_data["email"].lower())
             if not mentor:
@@ -203,6 +405,7 @@ async def init_db():
                     full_name=mentor_data["full_name"],
                     hashed_password=get_password_hash("12345678"),
                     college=mentor_data["college"],
+                    bio=mentor_data.get("bio"),
                     reputation_score=mentor_data["reputation_score"],
                     is_verified=True,
                 )
@@ -210,123 +413,202 @@ async def init_db():
                 await session.flush()
                 wallet = Wallet(
                     user_id=mentor.id,
-                    balance=float(settings.INITIAL_WALLET_CREDIT or 0),
-                    total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+                    balance=float(settings.INITIAL_WALLET_CREDIT or 50),
+                    total_earned=float(settings.INITIAL_WALLET_CREDIT or 50),
                 )
                 session.add(wallet)
                 await session.flush()
-                if settings.INITIAL_WALLET_CREDIT:
-                    session.add(Transaction(
-                        wallet_id=wallet.id,
-                        amount=float(settings.INITIAL_WALLET_CREDIT),
-                        transaction_type="credit",
-                        description="Welcome bonus",
-                        reference_id="welcome_bonus",
-                    ))
+                session.add(Transaction(
+                    wallet_id=wallet.id,
+                    amount=float(settings.INITIAL_WALLET_CREDIT or 50),
+                    transaction_type="credit",
+                    description="Welcome bonus",
+                    reference_id="welcome_bonus",
+                ))
                 existing_users[mentor.email.lower()] = mentor
             else:
                 mentor.reputation_score = mentor_data["reputation_score"]
                 mentor.is_verified = True
+                if mentor_data.get("bio") and not mentor.bio:
+                    mentor.bio = mentor_data.get("bio")
 
             existing_user_skill_result = await session.execute(
                 select(UserSkill).where(UserSkill.user_id == mentor.id)
             )
-            existing_skill_ids = {
-                user_skill.skill_id for user_skill in existing_user_skill_result.scalars().all()
+            existing_user_skills = {
+                user_skill.skill_id: user_skill for user_skill in existing_user_skill_result.scalars().all()
             }
 
             for skill_name, level, hourly_rate in mentor_data["skills"]:
                 skill = skill_map.get(skill_name.lower())
-                if not skill or skill.id in existing_skill_ids:
+                if not skill:
                     continue
 
-                session.add(
-                    UserSkill(
-                        user_id=mentor.id,
-                        skill_id=skill.id,
-                        level=SkillLevel(level),
-                        verification_status=VerificationStatus.verified,
-                        is_offering=True,
-                        hourly_rate=hourly_rate,
-                        years_experience=2.0 if level == "intermediate" else 4.0,
+                if skill.id in existing_user_skills:
+                    existing_skill = existing_user_skills[skill.id]
+                    existing_skill.is_offering = True
+                    existing_skill.verification_status = VerificationStatus.verified
+                    if not existing_skill.hourly_rate:
+                        existing_skill.hourly_rate = float(hourly_rate)
+                else:
+                    session.add(
+                        UserSkill(
+                            user_id=mentor.id,
+                            skill_id=skill.id,
+                            level=SkillLevel(level),
+                            verification_status=VerificationStatus.verified,
+                            is_offering=True,
+                            hourly_rate=float(hourly_rate),
+                            years_experience=2.0 if level == "intermediate" else 4.0,
+                        )
+                    )
+
+        await session.flush()
+
+        # GUARANTEE: Ensure EVERY skill in the database has at least 2 active offering mentors
+        all_skills_query = await session.execute(select(Skill))
+        all_db_skills = all_skills_query.scalars().all()
+        active_mentor_candidates = [
+            u for u in existing_users.values()
+            if u.role == UserRole.student and u.is_active and u.email.endswith("@gmail.com")
+        ]
+
+        if active_mentor_candidates:
+            for db_skill in all_db_skills:
+                offering_query = await session.execute(
+                    select(UserSkill).where(
+                        UserSkill.skill_id == db_skill.id,
+                        UserSkill.is_offering == True,
                     )
                 )
+                existing_offerings = offering_query.scalars().all()
+                existing_offering_user_ids = {o.user_id for o in existing_offerings}
 
-        existing_task_result = await session.execute(select(Task))
-        if existing_task_result.scalars().first() is None:
-            poster = next(iter(existing_users.values()), None)
-            if poster:
-                tasks = []
-                for item in SAMPLE_TASKS:
-                    tasks.append(Task(
-                        poster_id=poster.id,
-                        title=item["title"],
-                        description=item["description"],
-                        subject=item["subject"],
-                        budget=item["budget"],
-                        deadline=datetime.utcnow() + timedelta(days=item["deadline_days"]),
-                    ))
-                session.add_all(tasks)
+                # If less than 2 mentors offering this skill, assign from candidate pool
+                needed = 2 - len(existing_offerings)
+                if needed > 0:
+                    added_count = 0
+                    for candidate in active_mentor_candidates:
+                        if candidate.id not in existing_offering_user_ids:
+                            us_check = await session.execute(
+                                select(UserSkill).where(
+                                    UserSkill.user_id == candidate.id,
+                                    UserSkill.skill_id == db_skill.id,
+                                )
+                            )
+                            existing_row = us_check.scalar_one_or_none()
+                            if existing_row:
+                                existing_row.is_offering = True
+                                existing_row.verification_status = VerificationStatus.verified
+                                if not existing_row.hourly_rate:
+                                    existing_row.hourly_rate = 450.0
+                            else:
+                                session.add(
+                                    UserSkill(
+                                        user_id=candidate.id,
+                                        skill_id=db_skill.id,
+                                        level=SkillLevel.advanced,
+                                        verification_status=VerificationStatus.verified,
+                                        is_offering=True,
+                                        hourly_rate=450.0,
+                                        years_experience=3.0,
+                                    )
+                                )
+                            existing_offering_user_ids.add(candidate.id)
+                            added_count += 1
+                            if added_count >= needed:
+                                break
 
-        # Seed sample learner + sessions
-        learner_email = "learner.demo@example.com"
+        await session.flush()
+
+        # Seed sample learner (Rahul Verma)
+        learner_email = "rahul.verma.student@gmail.com"
         learner = existing_users.get(learner_email)
         if not learner:
             learner = User(
                 email=learner_email,
-                username="learner_demo",
-                full_name="Demo Learner",
+                username="rahul_verma",
+                full_name="Rahul Verma",
                 hashed_password=get_password_hash("12345678"),
-                college="Demo University",
-                reputation_score=4.1,
+                college="Delhi Technological University",
+                bio="Computer Science student passionate about full-stack web development and competitive programming.",
+                reputation_score=4.5,
                 is_verified=True,
             )
             session.add(learner)
             await session.flush()
             wallet = Wallet(
                 user_id=learner.id,
-                balance=float(settings.INITIAL_WALLET_CREDIT or 0),
-                total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+                balance=float(settings.INITIAL_WALLET_CREDIT or 50),
+                total_earned=float(settings.INITIAL_WALLET_CREDIT or 50),
             )
             session.add(wallet)
             await session.flush()
-            if settings.INITIAL_WALLET_CREDIT:
-                session.add(Transaction(
-                    wallet_id=wallet.id,
-                    amount=float(settings.INITIAL_WALLET_CREDIT),
-                    transaction_type="credit",
-                    description="Welcome bonus",
-                    reference_id="welcome_bonus",
-                ))
+            session.add(Transaction(
+                wallet_id=wallet.id,
+                amount=float(settings.INITIAL_WALLET_CREDIT or 50),
+                transaction_type="credit",
+                description="Welcome bonus",
+                reference_id="welcome_bonus",
+            ))
             existing_users[learner.email.lower()] = learner
 
+        # Seed sample marketplace tasks
+        existing_task_result = await session.execute(select(Task))
+        if existing_task_result.scalars().first() is None:
+            tasks = []
+            for item in SAMPLE_TASKS:
+                poster = existing_users.get(item.get("poster_email", "").lower()) or learner or next(iter(existing_users.values()))
+                tasks.append(Task(
+                    poster_id=poster.id,
+                    title=item["title"],
+                    description=item["description"],
+                    subject=item["subject"],
+                    budget=item["budget"],
+                    deadline=datetime.utcnow() + timedelta(days=item["deadline_days"]),
+                    status=TaskStatus.open,
+                ))
+            session.add_all(tasks)
+
+        # Seed sample learning sessions and reviews
         existing_session_result = await session.execute(select(LearningSession))
-        if existing_session_result.scalars().first() is None and SAMPLE_MENTORS:
-            mentor_user = existing_users.get(SAMPLE_MENTORS[0]["email"].lower())
-            skill = skill_map.get(SAMPLE_MENTORS[0]["skills"][0][0].lower())
-            if mentor_user and learner and skill:
-                session.add_all([
-                    LearningSession(
-                        mentor_id=mentor_user.id,
-                        learner_id=learner.id,
-                        skill_id=skill.id,
-                        status=SessionStatus.confirmed,
-                        scheduled_at=datetime.utcnow() + timedelta(days=1),
-                        duration_minutes=60,
-                        meet_link="https://meet.google.com/demo-session",
-                        notes="Demo confirmed session",
-                    ),
-                    LearningSession(
-                        mentor_id=mentor_user.id,
-                        learner_id=learner.id,
-                        skill_id=skill.id,
-                        status=SessionStatus.completed,
-                        scheduled_at=datetime.utcnow() - timedelta(days=2),
-                        duration_minutes=60,
-                        meet_link="https://meet.google.com/demo-completed",
-                        notes="Demo completed session",
-                    ),
-                ])
+        if existing_session_result.scalars().first() is None and len(SAMPLE_MENTORS) >= 2:
+            mentor1 = existing_users.get("aarav.sharma.dev@gmail.com")
+            mentor2 = existing_users.get("riya.verma.code@gmail.com")
+            skill_python = skill_map.get("python")
+            skill_react = skill_map.get("react")
+
+            if mentor1 and learner and skill_python:
+                s1 = LearningSession(
+                    mentor_id=mentor1.id,
+                    learner_id=learner.id,
+                    skill_id=skill_python.id,
+                    status=SessionStatus.completed,
+                    scheduled_at=datetime.utcnow() - timedelta(days=2),
+                    duration_minutes=60,
+                    meet_link="https://meet.google.com/tc-aarav-demo",
+                    notes="Python asynchronous programming & FastAPI structure",
+                )
+                session.add(s1)
+                await session.flush()
+                session.add(SessionFeedback(
+                    session_id=s1.id,
+                    rating=5,
+                    review="Incredible mentor! Clarified all my doubts about async FastAPI in just one hour.",
+                ))
+
+            if mentor2 and learner and skill_react:
+                s2 = LearningSession(
+                    mentor_id=mentor2.id,
+                    learner_id=learner.id,
+                    skill_id=skill_react.id,
+                    status=SessionStatus.confirmed,
+                    scheduled_at=datetime.utcnow() + timedelta(days=1),
+                    duration_minutes=60,
+                    meet_link="https://meet.google.com/tc-riya-demo",
+                    notes="React state management and custom hooks best practices",
+                )
+                session.add(s2)
 
         # Ensure initial wallet credit is normalized to target_bonus (₹50) for all users in DB
         target_bonus = float(settings.INITIAL_WALLET_CREDIT or 50)

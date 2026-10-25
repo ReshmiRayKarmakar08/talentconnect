@@ -165,7 +165,7 @@ export function LoginPage() {
           type="button"
           disabled={loading}
           onClick={async () => {
-            setValue('email', 'learner.demo@example.com', { shouldValidate: true })
+            setValue('email', 'rahul.verma.student@gmail.com', { shouldValidate: true })
             setValue('password', '12345678', { shouldValidate: true })
             // We need a short delay to ensure react-hook-form registers the input value changes before we submit
             setTimeout(() => {
