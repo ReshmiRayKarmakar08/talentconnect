@@ -79,13 +79,13 @@ function CreateTaskModal({ onClose, onCreate }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="card w-full max-w-lg animate-slide-up">
-        <div className="p-6 border-b border-surface-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="p-4 sm:p-6 border-b border-surface-border">
           <h2 className="section-title">Post a Task</h2>
           <p className="text-gray-500 text-sm mt-1">Describe what you need help with</p>
         </div>
-        <form onSubmit={submit} className="p-6 space-y-4">
+        <form onSubmit={submit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="label">Task Title</label>
             <input value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="input" placeholder="e.g. Help with Machine Learning assignment" required minLength={10} />
@@ -94,7 +94,7 @@ function CreateTaskModal({ onClose, onCreate }) {
             <label className="label">Description</label>
             <textarea value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="input min-h-24 resize-none" placeholder="Describe the task in detail..." required minLength={20} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="label">Subject</label>
               <input value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} className="input" placeholder="e.g. Data Science" required />
@@ -155,15 +155,15 @@ function TaskDetailModal({ task, onClose, onAccept, onSubmit, onPay, onWalletPay
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="card w-full max-w-lg max-h-[85vh] overflow-y-auto animate-slide-up">
-        <div className="p-6 border-b border-surface-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="p-4 sm:p-6 border-b border-surface-border">
           <div className="flex items-center justify-between">
             <h2 className="section-title line-clamp-1">{task.title}</h2>
             <span className={`badge ${statusColors[task.status]} shrink-0`}>{task.status}</span>
           </div>
         </div>
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           <p className="text-gray-300 text-sm leading-relaxed">{task.description}</p>
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-surface-hover rounded-xl p-3 text-center">
@@ -426,23 +426,22 @@ export default function Marketplace() {
   const displayTasks = tab === 'browse' ? tasks.filter(t => t.title.toLowerCase().includes(search.toLowerCase())) : myTasks
 
   return (
-    <div className="p-8 animate-slide-up">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 animate-slide-up max-w-7xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="page-header">Task Marketplace</h1>
           <p className="text-gray-500 text-sm mt-1">Post tasks or earn by helping others</p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2">
+        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto">
           <Plus size={16} /> Post Task
         </button>
       </div>
 
-
       {/* Tabs */}
-      <div className="flex items-center gap-1 bg-surface-card border border-surface-border rounded-xl p-1 w-fit mb-6">
+      <div className="flex items-center gap-1 bg-surface-card border border-surface-border rounded-xl p-1 max-w-full overflow-x-auto scrollbar-none whitespace-nowrap mb-6">
         {['browse', 'my-tasks'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium shrink-0 transition-all
               ${tab === t ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}>
             {t === 'browse' ? 'Browse Tasks' : 'My Tasks'}
           </button>
@@ -452,7 +451,7 @@ export default function Marketplace() {
       {tab === 'browse' && (
         <div className="relative mb-6">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks..." className="input pl-9 max-w-sm" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search tasks..." className="input pl-9 w-full sm:max-w-sm" />
         </div>
       )}
 

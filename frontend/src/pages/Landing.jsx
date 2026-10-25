@@ -79,13 +79,13 @@ export default function LandingPage() {
       </div>
 
       <header className="sticky top-0 z-50 border-b border-white/10 bg-surface/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 lg:px-8">
           <BrandMark />
           {user ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Link
                 to={dashboardPath}
-                className="flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 py-1.5 pl-2 pr-3.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/20 hover:bg-white/10"
+                className="hidden sm:flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 py-1.5 pl-2 pr-3.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/20 hover:bg-white/10"
               >
                 {user.avatar_url ? (
                   <img src={user.avatar_url} alt={user.full_name} className="h-6 w-6 rounded-full object-cover" />
@@ -101,14 +101,14 @@ export default function LandingPage() {
               </Link>
               <Link
                 to={dashboardPath}
-                className="btn-primary inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-4"
+                className="btn-primary inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-3 sm:px-4"
               >
                 <span>Dashboard</span>
                 <ArrowRight size={14} />
               </Link>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <NavButton to="/login">Login</NavButton>
               <NavButton to="/login" primary>Get Started</NavButton>
             </div>
@@ -117,13 +117,13 @@ export default function LandingPage() {
       </header>
 
       <main className="relative">
-        <section className="mx-auto grid max-w-7xl gap-16 px-6 pb-16 pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:pb-24 lg:pt-24">
+        <section className="mx-auto grid max-w-7xl gap-10 lg:gap-16 px-4 sm:px-6 pb-12 sm:pb-16 pt-10 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:pb-24 lg:pt-24">
           <div className="animate-slide-up">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300">
+            <div className="mb-4 sm:mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-300">
               <ShieldCheck size={14} className="text-brand-300" />
               Peer learning, verified skills, guided growth
             </div>
-            <h1 className="max-w-3xl text-5xl font-bold leading-tight tracking-tight text-white font-display md:text-6xl">
+            <h1 className="max-w-3xl text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-white font-display">
               Learn Together. Build Skills. Grow Faster.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-300">

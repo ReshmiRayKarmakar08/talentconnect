@@ -192,15 +192,15 @@ function BookSessionModal({ mentor, onClose, onBooked }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="card w-full max-w-lg animate-slide-up">
-        <div className="p-6 border-b border-surface-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="p-4 sm:p-6 border-b border-surface-border">
           <h2 className="section-title">Book {mentor.user.full_name}</h2>
           <p className="text-gray-500 text-sm mt-1">
             {mentor.user_skill.skill.name} · ₹{mentor.user_skill.hourly_rate || 0}/hr
           </p>
         </div>
-        <form onSubmit={submit} className="p-6 space-y-4">
+        <form onSubmit={submit} className="p-4 sm:p-6 space-y-4">
           <div>
             <label className="label">Date & Time</label>
             <input
@@ -275,10 +275,10 @@ function PaymentModal({ pendingBooking, amount, walletBalance, isProcessing, onC
   const duration = pendingBooking?.form?.duration_minutes || 60
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
-      <div className="card w-full max-w-xl overflow-hidden border-surface-border bg-[#121624] shadow-2xl">
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 animate-fade-in">
+      <div className="card w-full max-w-xl max-h-[90vh] overflow-y-auto border-surface-border bg-[#121624] shadow-2xl">
         {/* Modal Header */}
-        <div className="p-6 border-b border-surface-border flex items-start justify-between">
+        <div className="p-4 sm:p-6 border-b border-surface-border flex items-start justify-between">
           <div>
             <h2 className="text-xl font-bold text-white font-display">Confirm & Pay for Session</h2>
             <p className="text-xs text-gray-400 mt-1">
@@ -296,7 +296,7 @@ function PaymentModal({ pendingBooking, amount, walletBalance, isProcessing, onC
         </div>
 
         {/* Session details overview */}
-        <div className="px-6 py-3.5 bg-surface-hover/70 border-b border-surface-border flex flex-wrap items-center justify-between gap-3 text-xs text-gray-300">
+        <div className="px-4 sm:px-6 py-3.5 bg-surface-hover/70 border-b border-surface-border flex flex-wrap items-center justify-between gap-3 text-xs text-gray-300">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5 text-gray-400">
               <Calendar size={13} className="text-brand-400" />
@@ -313,7 +313,7 @@ function PaymentModal({ pendingBooking, amount, walletBalance, isProcessing, onC
           </div>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Choose Payment Method
           </p>
@@ -670,8 +670,8 @@ export default function Sessions() {
   }
 
   return (
-    <div className="p-8 animate-slide-up">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 animate-slide-up max-w-7xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
           <h1 className="page-header">My Sessions</h1>
           <p className="text-gray-500 text-sm mt-1">Manage your learning sessions</p>
@@ -681,13 +681,13 @@ export default function Sessions() {
         </div>
       </div>
 
-      <div className="card p-6 mb-6">
-        <div className="flex items-center justify-between gap-4 mb-4">
+      <div className="card p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="section-title">Find a Mentor</h2>
             <p className="text-gray-500 text-sm mt-1">Choose a skill and book a session with a mentor.</p>
           </div>
-          <button onClick={() => navigate('/skills')} className="btn-secondary text-sm">
+          <button onClick={() => navigate('/skills')} className="btn-secondary text-sm self-start sm:self-auto">
             Manage Skills
           </button>
         </div>
@@ -712,14 +712,14 @@ export default function Sessions() {
           </div>
           <div>
             {!selectedSkillId ? (
-              <div className="rounded-2xl border border-surface-border bg-surface-hover/50 p-8 text-center">
+              <div className="rounded-2xl border border-surface-border bg-surface-hover/50 p-6 sm:p-8 text-center">
                 <BookOpen size={28} className="text-gray-600 mx-auto mb-3" />
                 <p className="text-gray-400 text-sm">Select a skill to see available mentors.</p>
               </div>
             ) : mentorLoading ? (
               <div className="flex justify-center py-10"><Loader2 className="animate-spin text-brand-400" size={28} /></div>
             ) : mentors.length === 0 ? (
-              <div className="rounded-2xl border border-surface-border bg-surface-hover/50 p-8 text-center">
+              <div className="rounded-2xl border border-surface-border bg-surface-hover/50 p-6 sm:p-8 text-center">
                 <p className="text-gray-400 text-sm">No mentors found for this skill yet.</p>
               </div>
             ) : (
@@ -734,10 +734,10 @@ export default function Sessions() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 bg-surface-card border border-surface-border rounded-xl p-1 w-fit mb-6">
+      <div className="flex gap-1 bg-surface-card border border-surface-border rounded-xl p-1 max-w-full overflow-x-auto scrollbar-none whitespace-nowrap mb-6">
         {['all', 'pending', 'confirmed', 'completed', 'cancelled'].map(f => (
           <button key={f} onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize transition-all
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize shrink-0 transition-all
               ${filter === f ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}>
             {f}
           </button>

@@ -70,17 +70,19 @@ export default function AIAssistant() {
   }
 
   return (
-    <div className="h-screen flex flex-col p-8 animate-fade-in">
-      <div className="mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-            <Bot size={20} className="text-white" />
+    <div className="h-[calc(100vh-60px)] md:h-screen flex flex-col p-3 sm:p-6 lg:p-8 animate-fade-in max-w-5xl mx-auto w-full">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shrink-0">
+              <Bot size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="page-header">AI Learning Assistant</h1>
+              <p className="text-gray-500 text-xs sm:text-sm">Powered by TalentConnect AI · General learning and platform help</p>
+            </div>
           </div>
-          <div>
-            <h1 className="page-header">AI Learning Assistant</h1>
-            <p className="text-gray-500 text-sm">Powered by TalentConnect AI · General learning and platform help</p>
-          </div>
-          <div className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+          <div className="self-start sm:self-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse-slow" />
             <span className="text-xs text-green-400 font-medium">Online</span>
           </div>

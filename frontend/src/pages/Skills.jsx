@@ -75,9 +75,9 @@ function VerificationModal({ userSkill, onClose, onVerified }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="card w-full max-w-lg max-h-[85vh] overflow-y-auto animate-slide-up">
-        <div className="p-6 border-b border-surface-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+      <div className="card w-full max-w-lg max-h-[90vh] overflow-y-auto animate-slide-up">
+        <div className="p-4 sm:p-6 border-b border-surface-border">
           <div className="flex items-center gap-2">
             <Shield size={18} className="text-brand-400" />
             <h2 className="section-title">Skill Verification Quiz</h2>
@@ -85,7 +85,7 @@ function VerificationModal({ userSkill, onClose, onVerified }) {
           <p className="text-gray-500 text-sm mt-1">Score ≥70% to get verified. You need to answer all 5 questions.</p>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {loading && <div className="flex justify-center py-8"><Loader2 className="animate-spin text-brand-400" /></div>}
 
           {result && (
@@ -226,13 +226,13 @@ export default function SkillsPage() {
   const grouped = filtered.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc }, {})
 
   return (
-    <div className="p-8 animate-slide-up">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 animate-slide-up max-w-7xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
         <div>
           <h1 className="page-header">Skills Exchange</h1>
           <p className="text-gray-500 text-sm mt-1">Discover mentors, list your skills, get verified</p>
         </div>
-        <button onClick={() => setAddingSkill(true)} className="btn-primary flex items-center gap-2">
+        <button onClick={() => setAddingSkill(true)} className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto">
           <Plus size={16} /> Add My Skill
         </button>
       </div>
@@ -355,12 +355,12 @@ export default function SkillsPage() {
 
       {/* Add Skill Modal */}
       {addingSkill && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="card w-full max-w-md animate-slide-up">
-            <div className="p-6 border-b border-surface-border">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="card w-full max-w-md max-h-[90vh] overflow-y-auto animate-slide-up">
+            <div className="p-4 sm:p-6 border-b border-surface-border">
               <h2 className="section-title">Add a Skill</h2>
             </div>
-            <form onSubmit={addSkill} className="p-6 space-y-4">
+            <form onSubmit={addSkill} className="p-4 sm:p-6 space-y-4">
               <div className="flex gap-2 rounded-xl bg-surface-hover p-1">
                 <button
                   type="button"

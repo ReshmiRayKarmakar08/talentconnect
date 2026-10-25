@@ -153,21 +153,21 @@ export default function AdminPanel() {
   ]
 
   return (
-    <div className="p-8 animate-slide-up">
-      <div className="mb-8">
+    <div className="p-4 sm:p-6 lg:p-8 animate-slide-up max-w-7xl mx-auto w-full">
+      <div className="mb-6 sm:mb-8">
         <h1 className="page-header">System Controller</h1>
-        <p className="text-gray-500 text-sm mt-1">Platform administration & oversight</p>
+        <p className="text-gray-400 text-xs sm:text-sm mt-1">Platform administration & oversight</p>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-surface-card border border-surface-border rounded-xl p-1 w-fit mb-6">
+      {/* Tab bar - horizontally scrollable on mobile */}
+      <div className="flex gap-1.5 bg-surface-card border border-surface-border rounded-xl p-1 mb-6 max-w-full overflow-x-auto scrollbar-none whitespace-nowrap">
         {tabs.map(({ key, label }) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all
-              ${tab === key ? 'bg-brand-600 text-white' : 'text-gray-400 hover:text-gray-200'}`}>
+            className={`px-3.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all shrink-0
+              ${tab === key ? 'bg-brand-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'}`}>
             {label}
             {key === 'fraud-alerts' && stats?.fraud_alerts > 0 && (
-              <span className="ml-1.5 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">
+              <span className="ml-1.5 bg-red-500 text-white text-[10px] sm:text-xs rounded-full px-1.5 py-0.5 font-bold">
                 {stats.fraud_alerts}
               </span>
             )}
@@ -191,7 +191,7 @@ export default function AdminPanel() {
           )}
           {tab === 'overview' && stats && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 <StatCard icon={Users}       label="Total Users"    value={stats.total_users}   color="brand" />
                 <StatCard icon={CheckCircle} label="Active Users"   value={stats.active_users}  color="green" />
                 <StatCard icon={Calendar}    label="Total Sessions" value={stats.total_sessions} color="purple" />
@@ -206,7 +206,8 @@ export default function AdminPanel() {
 
           {tab === 'user-management' && (
             <div className="card overflow-hidden">
-              <table className="w-full text-sm">
+              <div className="overflow-x-auto scrollbar-thin">
+                <table className="w-full text-sm min-w-[640px]">
                 <thead>
                   <tr className="border-b border-surface-border bg-surface-hover">
                     <th className="text-left px-4 py-3 text-gray-500 font-medium">User</th>
@@ -265,140 +266,146 @@ export default function AdminPanel() {
                             disabled
                             className="text-xs px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 border border-red-500/20 text-red-400/40 opacity-40 cursor-not-allowed"
                           >
-                            <Trash2 size={11} /> Delete
-                          </button>
+                            <Trash2 size={11} /> Del                          </button>
                         </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
 
           {tab === 'tasks-monitoring' && (
             <div className="card overflow-hidden">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-surface-border bg-surface-hover">
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Task</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Posted by</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Budget</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Payment</th>
-                    <th className="text-left px-4 py-3 text-gray-500 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tasksDetailed.map(t => (
-                    <tr key={t.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-200 line-clamp-1 max-w-xs">{t.title}</p>
-                        <p className="text-xs text-gray-500">{t.subject}</p>
-                      </td>
-                      <td className="px-4 py-3 text-gray-400">{t.poster?.full_name}</td>
-                      <td className="px-4 py-3 text-green-400 font-medium">₹{t.budget}</td>
-                      <td className="px-4 py-3">
-                        <span className={`badge ${t.is_flagged ? 'badge-red' : t.status === 'completed' ? 'badge-green' : 'badge-blue'}`}>
-                          {t.is_flagged ? 'flagged' : t.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-gray-400">
-                        {t.payment_status ? (
-                          <span className={`badge ${t.payment_status === 'paid' ? 'badge-green' : 'badge-yellow'}`}>
-                            {t.payment_status}
-                          </span>
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-2">
-                          {!t.is_flagged && (
-                            <button onClick={() => handleFlagTask(t.id)}
-                              className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1">
-                              <Flag size={11} /> Flag
-                            </button>
-                          )}
-                          <button onClick={() => handleRemoveTask(t.id)}
-                            className="text-xs px-3 py-1.5 rounded-lg bg-surface-hover text-gray-300 border border-white/10 hover:text-white transition-all flex items-center gap-1">
-                            <Trash2 size={11} /> Remove
-                          </button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto scrollbar-thin">
+                <table className="w-full text-sm min-w-[640px]">
+                  <thead>
+                    <tr className="border-b border-surface-border bg-surface-hover">
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Task</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Posted by</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Budget</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Payment</th>
+                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {tasksDetailed.map(t => (
+                      <tr key={t.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-200 line-clamp-1 max-w-xs">{t.title}</p>
+                          <p className="text-xs text-gray-500">{t.subject}</p>
+                        </td>
+                        <td className="px-4 py-3 text-gray-400">{t.poster?.full_name}</td>
+                        <td className="px-4 py-3 text-green-400 font-medium">₹{t.budget}</td>
+                        <td className="px-4 py-3">
+                          <span className={`badge ${t.is_flagged ? 'badge-red' : t.status === 'completed' ? 'badge-green' : 'badge-blue'}`}>
+                            {t.is_flagged ? 'flagged' : t.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-400">
+                          {t.payment_status ? (
+                            <span className={`badge ${t.payment_status === 'paid' ? 'badge-green' : 'badge-yellow'}`}>
+                              {t.payment_status}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            {!t.is_flagged && (
+                              <button onClick={() => handleFlagTask(t.id)}
+                                className="text-xs px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all flex items-center gap-1">
+                                <Flag size={11} /> Flag
+                              </button>
+                            )}
+                            <button onClick={() => handleRemoveTask(t.id)}
+                              className="text-xs px-3 py-1.5 rounded-lg bg-surface-hover text-gray-300 border border-white/10 hover:text-white transition-all flex items-center gap-1">
+                              <Trash2 size={11} /> Remove
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
           {tab === 'sessions-monitoring' && (
             <div className="space-y-6">
               <div className="card overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border bg-surface-hover">
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Session</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Mentor</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Learner</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Scheduled</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sessions.map(s => (
-                      <tr key={s.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-gray-200">Session #{s.id}</p>
-                          <p className="text-xs text-gray-500">{s.skill?.name}</p>
-                        </td>
-                        <td className="px-4 py-3 text-gray-400">{s.mentor?.full_name}</td>
-                        <td className="px-4 py-3 text-gray-400">{s.learner?.full_name}</td>
-                        <td className="px-4 py-3">
-                          <span className={`badge ${s.status === 'completed' ? 'badge-green' : s.status === 'cancelled' ? 'badge-red' : 'badge-blue'}`}>
-                            {s.status}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</td>
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full text-sm min-w-[620px]">
+                    <thead>
+                      <tr className="border-b border-surface-border bg-surface-hover">
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Session</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Mentor</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Learner</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Scheduled</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {sessions.map(s => (
+                        <tr key={s.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-gray-200">Session #{s.id}</p>
+                            <p className="text-xs text-gray-500">{s.skill?.name}</p>
+                          </td>
+                          <td className="px-4 py-3 text-gray-400">{s.mentor?.full_name}</td>
+                          <td className="px-4 py-3 text-gray-400">{s.learner?.full_name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`badge ${s.status === 'completed' ? 'badge-green' : s.status === 'cancelled' ? 'badge-red' : 'badge-blue'}`}>
+                              {s.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-400">{new Date(s.scheduled_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div className="card overflow-hidden">
                 <div className="px-4 py-3 border-b border-surface-border bg-surface-hover text-sm font-medium text-gray-300">
                   Skill Verification Results
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border bg-surface-hover">
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">User</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Skill</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Score</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Attempted</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {skillVerifications.map(v => (
-                      <tr key={v.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
-                        <td className="px-4 py-3 text-gray-300">{v.user?.full_name}</td>
-                        <td className="px-4 py-3 text-gray-300">{v.skill?.name}</td>
-                        <td className="px-4 py-3 text-gray-300">{v.score?.toFixed(0) || '0'}%</td>
-                        <td className="px-4 py-3">
-                          <span className={`badge ${v.passed ? 'badge-green' : 'badge-red'}`}>
-                            {v.passed ? 'Passed' : 'Failed'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-gray-400">
-                          {v.attempted_at ? new Date(v.attempted_at).toLocaleString() : '—'}
-                        </td>
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full text-sm min-w-[550px]">
+                    <thead>
+                      <tr className="border-b border-surface-border bg-surface-hover">
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">User</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Skill</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Score</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Status</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Attempted</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {skillVerifications.map(v => (
+                        <tr key={v.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                          <td className="px-4 py-3 text-gray-300">{v.user?.full_name}</td>
+                          <td className="px-4 py-3 text-gray-300">{v.skill?.name}</td>
+                          <td className="px-4 py-3 text-gray-300">{v.score?.toFixed(0) || '0'}%</td>
+                          <td className="px-4 py-3">
+                            <span className={`badge ${v.passed ? 'badge-green' : 'badge-red'}`}>
+                              {v.passed ? 'Passed' : 'Failed'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-400">
+                            {v.attempted_at ? new Date(v.attempted_at).toLocaleString() : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -409,24 +416,26 @@ export default function AdminPanel() {
                 <div className="px-4 py-3 border-b border-surface-border bg-surface-hover text-sm font-medium text-gray-300">
                   High Risk Users
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border bg-surface-hover">
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">User</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Cancellations</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Fraud Score</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {riskUsers.map((item) => (
-                      <tr key={item.user.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
-                        <td className="px-4 py-3 text-gray-300">{item.user.full_name}</td>
-                        <td className="px-4 py-3 text-gray-300">{item.cancellation_count}</td>
-                        <td className="px-4 py-3 text-gray-300">{item.fraud_score?.toFixed(2)}</td>
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full text-sm min-w-[480px]">
+                    <thead>
+                      <tr className="border-b border-surface-border bg-surface-hover">
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">User</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Cancellations</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Fraud Score</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {riskUsers.map((item) => (
+                        <tr key={item.user.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                          <td className="px-4 py-3 text-gray-300">{item.user.full_name}</td>
+                          <td className="px-4 py-3 text-gray-300">{item.cancellation_count}</td>
+                          <td className="px-4 py-3 text-gray-300">{item.fraud_score?.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div className="space-y-3">
@@ -436,10 +445,10 @@ export default function AdminPanel() {
                     <p className="text-gray-500">No fraud alerts</p>
                   </div>
                 ) : fraudLogs.map(log => (
-                  <div key={log.id} className={`card p-4 flex items-center justify-between
+                  <div key={log.id} className={`card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3
                     ${log.severity === 'high' ? 'border-red-500/30' : log.severity === 'medium' ? 'border-yellow-500/30' : ''}`}>
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <AlertTriangle size={14} className={
                           log.severity === 'high' ? 'text-red-400' : log.severity === 'medium' ? 'text-yellow-400' : 'text-gray-400'
                         } />
@@ -450,12 +459,12 @@ export default function AdminPanel() {
                         </span>
                         {log.is_reviewed && <span className="badge badge-green">reviewed</span>}
                       </div>
-                      <p className="text-xs text-gray-500">User ID: {log.user_id} · {log.details}</p>
-                      <p className="text-xs text-gray-600 mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
+                      <p className="text-xs text-gray-400">User ID: {log.user_id} · {log.details}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{new Date(log.created_at).toLocaleString()}</p>
                     </div>
                     {!log.is_reviewed && (
                       <button onClick={() => handleReviewLog(log.id)}
-                        className="btn-secondary text-xs px-3 py-1.5 shrink-0 ml-4">
+                        className="btn-secondary text-xs px-3 py-1.5 shrink-0 self-start sm:self-auto">
                         Mark Reviewed
                       </button>
                     )}
@@ -471,59 +480,63 @@ export default function AdminPanel() {
                 <div className="px-4 py-3 border-b border-surface-border bg-surface-hover text-sm font-medium text-gray-300">
                   Session Feedback
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border bg-surface-hover">
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Session</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Rating</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Review</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Created</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sessionFeedback.map(fb => (
-                      <tr key={fb.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
-                        <td className="px-4 py-3 text-gray-300">#{fb.session_id}</td>
-                        <td className="px-4 py-3 text-gray-300">{fb.rating}</td>
-                        <td className="px-4 py-3 text-gray-400">{fb.review || '—'}</td>
-                        <td className="px-4 py-3 text-gray-500">{new Date(fb.created_at).toLocaleString()}</td>
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full text-sm min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-surface-border bg-surface-hover">
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Session</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Rating</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Review</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Created</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {sessionFeedback.map(fb => (
+                        <tr key={fb.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                          <td className="px-4 py-3 text-gray-300">#{fb.session_id}</td>
+                          <td className="px-4 py-3 text-gray-300">{fb.rating}★</td>
+                          <td className="px-4 py-3 text-gray-400">{fb.review || '—'}</td>
+                          <td className="px-4 py-3 text-gray-500">{new Date(fb.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               <div className="card overflow-hidden">
                 <div className="px-4 py-3 border-b border-surface-border bg-surface-hover text-sm font-medium text-gray-300">
                   Task Feedback
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-surface-border bg-surface-hover">
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Task</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Rating</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Review</th>
-                      <th className="text-left px-4 py-3 text-gray-500 font-medium">Created</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {taskFeedback.map(fb => (
-                      <tr key={fb.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
-                        <td className="px-4 py-3 text-gray-300">#{fb.task_id}</td>
-                        <td className="px-4 py-3 text-gray-300">{fb.rating}</td>
-                        <td className="px-4 py-3 text-gray-400">{fb.review || '—'}</td>
-                        <td className="px-4 py-3 text-gray-500">{new Date(fb.created_at).toLocaleString()}</td>
+                <div className="overflow-x-auto scrollbar-thin">
+                  <table className="w-full text-sm min-w-[500px]">
+                    <thead>
+                      <tr className="border-b border-surface-border bg-surface-hover">
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Task</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Rating</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Review</th>
+                        <th className="text-left px-4 py-3 text-gray-500 font-medium">Created</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {taskFeedback.map(fb => (
+                        <tr key={fb.id} className="border-b border-surface-border hover:bg-surface-hover transition-colors">
+                          <td className="px-4 py-3 text-gray-300">#{fb.task_id}</td>
+                          <td className="px-4 py-3 text-gray-300">{fb.rating}★</td>
+                          <td className="px-4 py-3 text-gray-400">{fb.review || '—'}</td>
+                          <td className="px-4 py-3 text-gray-500">{new Date(fb.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
 
           {userDetail && (
-            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <div className="card w-full max-w-3xl max-h-[85vh] overflow-y-auto p-6">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 overflow-y-auto">
+              <div className="card w-full max-w-3xl my-auto max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h2 className="text-xl font-semibold text-white">{userDetail.user.full_name}</h2>

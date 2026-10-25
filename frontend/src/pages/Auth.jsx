@@ -33,7 +33,7 @@ function AuthLayout({ children, title, subtitle, withCard = true }) {
         </div>
 
         {withCard ? (
-          <div className="card p-8">
+          <div className="card p-5 sm:p-8">
             <h1 className="text-2xl font-bold text-white font-display mb-1">{title}</h1>
             <p className="text-gray-500 text-sm mb-6">{subtitle}</p>
             {children}
@@ -315,7 +315,7 @@ export function RegisterPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="label">Full Name</label>
             <input

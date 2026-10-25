@@ -70,16 +70,16 @@ export default function Dashboard() {
   const activeTasks = tasks.filter(t => ['open', 'assigned', 'submitted'].includes(t.status)).length
 
   return (
-    <div className="p-8 animate-slide-up">
+    <div className="p-4 sm:p-6 lg:p-8 animate-slide-up max-w-7xl mx-auto w-full">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <p className="text-gray-500 text-sm mb-1">Welcome back</p>
         <h1 className="page-header">{user?.full_name}</h1>
         <p className="text-gray-400 mt-1 text-sm">@{user?.username} · {user?.college || 'Student'}</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         <StatCard icon={Calendar}    label="My Sessions"    value={sessions.length}  color="brand" to="/sessions" />
         <StatCard icon={ShoppingBag} label="Active Tasks"   value={activeTasks}      color="green" to="/marketplace" />
         <StatCard icon={CheckCircle2} label="Completed"     value={completedSessions} color="purple" />
@@ -88,7 +88,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Recent Sessions */}
-        <div className="lg:col-span-2 card p-6">
+        <div className="lg:col-span-2 card p-4 sm:p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="section-title">Recent Sessions</h2>
             <Link to="/sessions" className="text-brand-400 hover:text-brand-300 text-sm flex items-center gap-1 transition-colors">
@@ -109,7 +109,7 @@ export default function Dashboard() {
         </div>
 
         {/* AI Recommendations */}
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Sparkles size={16} className="text-brand-400" />
             <h2 className="section-title">Recommended Skills</h2>
@@ -162,7 +162,7 @@ export default function Dashboard() {
       </div>
 
       {/* Recent Tasks */}
-      <div className="card p-6 mt-6">
+      <div className="card p-4 sm:p-6 mt-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title">Recent Tasks</h2>
           <Link to="/marketplace" className="text-brand-400 hover:text-brand-300 text-sm flex items-center gap-1 transition-colors">

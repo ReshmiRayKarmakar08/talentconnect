@@ -9,7 +9,7 @@ function LegalShell({ title, subtitle, lastUpdated = 'March 10, 2026', children 
       </div>
 
       <header className="sticky top-0 z-50 border-b border-white/10 bg-surface/70 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 lg:px-8">
           <BrandMark />
           <Link to="/login" className="btn-secondary">
             Login
@@ -17,10 +17,10 @@ function LegalShell({ title, subtitle, lastUpdated = 'March 10, 2026', children 
         </div>
       </header>
 
-      <main className="relative mx-auto max-w-4xl px-6 pb-20 pt-12 lg:px-8">
-        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 shadow-[0_20px_60px_rgba(6,10,24,0.45)]">
-          <p className="text-sm font-medium uppercase tracking-[0.24em] text-brand-300">TalentConnect Policies</p>
-          <h1 className="mt-3 text-3xl font-bold text-white font-display">{title}</h1>
+      <main className="relative mx-auto max-w-4xl px-4 sm:px-6 pb-20 pt-8 sm:pt-12 lg:px-8">
+        <div className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-8 shadow-[0_20px_60px_rgba(6,10,24,0.45)]">
+          <p className="text-xs sm:text-sm font-medium uppercase tracking-[0.24em] text-brand-300">TalentConnect Policies</p>
+          <h1 className="mt-2 sm:mt-3 text-2xl sm:text-3xl font-bold text-white font-display">{title}</h1>
           {subtitle ? <p className="mt-3 text-base text-gray-300">{subtitle}</p> : null}
           <p className="mt-4 text-xs uppercase tracking-[0.2em] text-gray-500">Last updated: {lastUpdated}</p>
 
