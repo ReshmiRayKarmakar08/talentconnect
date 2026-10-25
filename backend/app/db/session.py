@@ -328,63 +328,85 @@ async def init_db():
                     ),
                 ])
 
-        # Ensure initial wallet credit for users who have no transactions yet
-        if settings.INITIAL_WALLET_CREDIT:
-            for user in existing_users.values():
-                wallet_result = await session.execute(select(Wallet).where(Wallet.user_id == user.id))
-                wallet = wallet_result.scalar_one_or_none()
-                if not wallet:
-                    wallet = Wallet(
-                        user_id=user.id,
-                        balance=float(settings.INITIAL_WALLET_CREDIT),
-                        total_earned=float(settings.INITIAL_WALLET_CREDIT),
-                    )
-                    session.add(wallet)
-                    await session.flush()
-                    session.add(Transaction(
-                        wallet_id=wallet.id,
-                        amount=float(settings.INITIAL_WALLET_CREDIT),
-                        transaction_type="credit",
-                        description="Welcome bonus",
-                        reference_id="welcome_bonus",
-                    ))
-                    continue
+        # Ensure initial wallet credit is normalized to target_bonus (₹50) for all users in DB
+        target_bonus = float(settings.INITIAL_WALLET_CREDIT or 50)
+        
+        # Clean up any test withdrawals executed against the previous 1000 balance
+        test_withdrawals = await session.execute(
+            select(Transaction).where(
+                Transaction.transaction_type == "debit",
+                (Transaction.reference_id.ilike("withdraw_%")) | (Transaction.description.ilike("%withdrawal%")),
+            )
+        )
+        for tw in test_withdrawals.scalars().all():
+            await session.delete(tw)
 
-                txn_result = await session.execute(
-                    select(Transaction).where(Transaction.wallet_id == wallet.id)
+        # Remove obsolete welcome bonus topup records
+        obsolete_topups = await session.execute(
+            select(Transaction).where(Transaction.reference_id.ilike("welcome_bonus_topup_%"))
+        )
+        for t in obsolete_topups.scalars().all():
+            await session.delete(t)
+
+        await session.flush()
+
+        # Ensure every existing user has a wallet and exactly one ₹50 welcome bonus
+        all_users = (await session.execute(select(User))).scalars().all()
+        for u in all_users:
+            w_res = await session.execute(select(Wallet).where(Wallet.user_id == u.id))
+            w = w_res.scalar_one_or_none()
+            if not w:
+                w = Wallet(
+                    user_id=u.id,
+                    balance=target_bonus,
+                    total_earned=target_bonus,
+                    total_spent=0.0,
                 )
-                has_txn = txn_result.scalars().first() is not None
-                if not has_txn and wallet.balance == 0:
-                    wallet.balance = float(settings.INITIAL_WALLET_CREDIT)
-                    wallet.total_earned = float(settings.INITIAL_WALLET_CREDIT)
+                session.add(w)
+                await session.flush()
+                session.add(Transaction(
+                    wallet_id=w.id,
+                    amount=target_bonus,
+                    transaction_type="credit",
+                    description="Welcome bonus",
+                    reference_id="welcome_bonus",
+                ))
+            else:
+                # Check for existing welcome bonus transaction
+                wb_tx_res = await session.execute(
+                    select(Transaction).where(
+                        Transaction.wallet_id == w.id,
+                        Transaction.transaction_type == "credit",
+                        (Transaction.reference_id == "welcome_bonus") | (Transaction.description.ilike("%welcome bonus%")),
+                    )
+                )
+                wb_txs = wb_tx_res.scalars().all()
+                if not wb_txs:
                     session.add(Transaction(
-                        wallet_id=wallet.id,
-                        amount=float(settings.INITIAL_WALLET_CREDIT),
+                        wallet_id=w.id,
+                        amount=target_bonus,
                         transaction_type="credit",
                         description="Welcome bonus",
                         reference_id="welcome_bonus",
                     ))
-                elif wallet.balance < float(settings.INITIAL_WALLET_CREDIT):
-                    topup_ref = f"welcome_bonus_topup_{settings.INITIAL_WALLET_CREDIT}"
-                    topup_result = await session.execute(
-                        select(Transaction).where(
-                            Transaction.wallet_id == wallet.id,
-                            Transaction.reference_id == topup_ref,
-                        )
-                    )
-                    already_topped = topup_result.scalar_one_or_none() is not None
-                    if not already_topped:
-                        diff = float(settings.INITIAL_WALLET_CREDIT) - wallet.balance
-                        if diff > 0:
-                            wallet.balance += diff
-                            wallet.total_earned += diff
-                            session.add(Transaction(
-                                wallet_id=wallet.id,
-                                amount=diff,
-                                transaction_type="credit",
-                                description="Welcome bonus top-up",
-                                reference_id=topup_ref,
-                            ))
+                else:
+                    wb_txs[0].amount = target_bonus
+                    wb_txs[0].description = "Welcome bonus"
+                    wb_txs[0].reference_id = "welcome_bonus"
+                    for duplicate_wb in wb_txs[1:]:
+                        await session.delete(duplicate_wb)
+
+        await session.flush()
+
+        # Recalculate all wallet balances from actual transactions
+        all_wallets = (await session.execute(select(Wallet))).scalars().all()
+        for w in all_wallets:
+            w_txns = (await session.execute(select(Transaction).where(Transaction.wallet_id == w.id))).scalars().all()
+            total_credits = sum(t.amount for t in w_txns if t.transaction_type == "credit")
+            total_debits = sum(t.amount for t in w_txns if t.transaction_type == "debit")
+            w.total_earned = total_credits
+            w.total_spent = total_debits
+            w.balance = max(0.0, total_credits - total_debits)
 
         await session.commit()
 

@@ -1,11 +1,26 @@
 import { useEffect, useState } from 'react'
 import {
   Wallet, TrendingUp, TrendingDown, ArrowDownLeft, ArrowUpRight,
-  Loader2, Plus, ArrowUpCircle, ExternalLink, X, CheckCircle2, AlertCircle
+  Loader2, Plus, ArrowUpCircle, X, CheckCircle2, AlertCircle
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import useAuthStore from '../store/authStore'
 import { getApiErrorMessage, paymentsAPI } from '../utils/api'
+
+const ensureRazorpayLoaded = () => {
+  return new Promise((resolve) => {
+    if (window.Razorpay) {
+      resolve(true)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.onload = () => resolve(true)
+    script.onerror = () => resolve(false)
+    document.body.appendChild(script)
+  })
+}
 
 export default function WalletPage() {
   const { user } = useAuthStore()
@@ -30,7 +45,6 @@ export default function WalletPage() {
   const [filterType, setFilterType] = useState('all')
 
   const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_SjgALiWCDFMzmo'
-  const paymentPageUrl = import.meta.env.VITE_RAZORPAY_PAYMENT_PAGE_URL || 'https://rzp.io/rzp/m0ll5SZl'
 
   const fetchWalletData = async () => {
     try {
@@ -62,59 +76,59 @@ export default function WalletPage() {
 
     setTopupLoading(true)
     try {
+      const isLoaded = await ensureRazorpayLoaded()
+      if (!isLoaded || !window.Razorpay) {
+        toast.error('Razorpay on-site checkout could not be loaded. Please check your internet connection.')
+        setTopupLoading(false)
+        return
+      }
+
       const { data: order } = await paymentsAPI.topupOrder({ amount: amountNum })
 
-      if (window.Razorpay) {
-        const options = {
-          key: order.key_id || razorpayKeyId,
-          amount: order.amount,
-          currency: order.currency || 'INR',
-          name: 'TalentConnect',
-          description: `Wallet Top-Up (₹${amountNum})`,
-          order_id: order.order_id,
-          prefill: {
-            name: user?.full_name || '',
-            email: user?.email || '',
+      const options = {
+        key: order.key_id || razorpayKeyId,
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        name: 'TalentConnect',
+        description: `Wallet Top-Up (₹${amountNum})`,
+        order_id: order.order_id,
+        prefill: {
+          name: user?.full_name || '',
+          email: user?.email || '',
+        },
+        theme: {
+          color: '#4f52e5',
+        },
+        handler: async (response) => {
+          const verifyToast = toast.loading('Verifying payment with bank...')
+          try {
+            const { data: updatedWallet } = await paymentsAPI.topupVerify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: amountNum,
+            })
+            setWallet(updatedWallet)
+            toast.success(`Successfully added ₹${amountNum.toFixed(2)} to your wallet!`, { id: verifyToast })
+            setShowTopupModal(false)
+            fetchWalletData()
+          } catch (vErr) {
+            toast.error(getApiErrorMessage(vErr, 'Payment verification failed'), { id: verifyToast })
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setTopupLoading(false)
           },
-          theme: {
-            color: '#4f52e5',
-          },
-          handler: async (response) => {
-            const verifyToast = toast.loading('Verifying payment with bank...')
-            try {
-              const { data: updatedWallet } = await paymentsAPI.topupVerify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                amount: amountNum,
-              })
-              setWallet(updatedWallet)
-              toast.success(`Successfully added ₹${amountNum.toFixed(2)} to your wallet!`, { id: verifyToast })
-              setShowTopupModal(false)
-              fetchWalletData()
-            } catch (vErr) {
-              toast.error(getApiErrorMessage(vErr, 'Payment verification failed'), { id: verifyToast })
-            }
-          },
-          modal: {
-            ondismiss: () => {
-              setTopupLoading(false)
-            },
-          },
-        }
-
-        const rzp = new window.Razorpay(options)
-        rzp.on('payment.failed', (response) => {
-          toast.error(response.error?.description || 'Payment cancelled or failed')
-          setTopupLoading(false)
-        })
-        rzp.open()
-      } else {
-        // Fallback to direct Razorpay payment link
-        window.open(paymentPageUrl, '_blank')
-        toast.success('Redirected to secure Razorpay payment page')
-        setShowTopupModal(false)
+        },
       }
+
+      const rzp = new window.Razorpay(options)
+      rzp.on('payment.failed', (response) => {
+        toast.error(response.error?.description || 'Payment cancelled or failed')
+        setTopupLoading(false)
+      })
+      rzp.open()
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to initiate Razorpay order'))
     } finally {
@@ -171,90 +185,90 @@ export default function WalletPage() {
   })
 
   return (
-    <div className="p-8 animate-slide-up max-w-6xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 animate-slide-up max-w-6xl mx-auto w-full">
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="page-header">Wallet & Payments</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage funds, Razorpay top-ups, and bank withdrawals</p>
+          <h1 className="page-header text-2xl sm:text-3xl font-bold">Wallet & Payments</h1>
+          <p className="text-gray-400 text-xs sm:text-sm mt-1">Manage funds, on-site Razorpay top-ups, and bank withdrawals</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
           <button
             onClick={() => setShowWithdrawModal(true)}
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-gray-200 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-2"
+            className="rounded-xl border border-white/10 bg-white/5 px-3.5 sm:px-4 py-2.5 text-xs font-semibold text-gray-200 hover:text-white hover:bg-white/10 transition-colors flex items-center gap-2"
           >
-            <ArrowUpCircle size={15} className="text-red-400" />
+            <ArrowUpCircle size={15} className="text-red-400 shrink-0" />
             Withdraw
           </button>
           <button
             onClick={() => setShowTopupModal(true)}
-            className="btn-primary flex items-center gap-2 text-xs font-semibold py-2.5 px-4"
+            className="btn-primary flex items-center gap-2 text-xs font-semibold py-2.5 px-3.5 sm:px-4"
           >
-            <Plus size={15} />
+            <Plus size={15} className="shrink-0" />
             Add Funds
           </button>
         </div>
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5 mb-8">
         {/* Available Balance Card */}
-        <div className="card p-6 md:col-span-1 bg-gradient-to-br from-brand-950 via-[#13172e] to-surface-card border-brand-500/30 shadow-lg relative overflow-hidden">
+        <div className="card p-5 sm:p-6 md:col-span-2 xl:col-span-1 bg-gradient-to-br from-brand-950 via-[#13172e] to-surface-card border-brand-500/30 shadow-lg relative overflow-hidden flex flex-col justify-between min-w-0">
           <div className="absolute right-0 top-0 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Available Balance</p>
-            <span className="rounded-full bg-brand-500/20 border border-brand-500/30 px-2.5 py-0.5 text-[10px] font-semibold text-brand-300">
-              Live Wallet
-            </span>
-          </div>
-          <p className="text-4xl font-bold text-white font-display mt-1">
-            ₹{wallet.balance?.toFixed(2) || '0.00'}
-          </p>
-          <div className="mt-4 flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300 font-medium">
-              <CheckCircle2 size={12} />
-              Welcome bonus ₹50 active
-            </span>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Available Balance</p>
+              <span className="rounded-full bg-brand-500/20 border border-brand-500/30 px-2.5 py-0.5 text-[10px] font-semibold text-brand-300">
+                Live Wallet
+              </span>
+            </div>
+            <p className="text-3xl sm:text-4xl font-bold text-white font-display mt-1 break-words">
+              ₹{wallet.balance?.toFixed(2) || '0.00'}
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300 font-medium">
+                <CheckCircle2 size={12} className="shrink-0" />
+                <span>Welcome bonus ₹50 active</span>
+              </span>
+            </div>
           </div>
 
           <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-gray-400">
-            <span>Razorpay Gateway</span>
-            <a
-              href={paymentPageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-400 hover:text-brand-300 flex items-center gap-1 font-medium transition-colors"
-            >
-              Payment Link <ExternalLink size={12} />
-            </a>
+            <span className="flex items-center gap-1.5 text-gray-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              On-Site Gateway
+            </span>
+            <span className="text-[11px] font-medium text-brand-300 bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-full">
+              Razorpay Secured
+            </span>
           </div>
         </div>
 
         {/* Total Earned Card */}
-        <div className="card p-6 flex items-center gap-4 border-white/10 hover:border-white/15 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+        <div className="card p-5 sm:p-6 flex items-center gap-3.5 sm:gap-4 border-white/10 hover:border-white/15 transition-colors min-w-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
             <TrendingUp size={22} className="text-emerald-400" />
           </div>
-          <div>
-            <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Total Earned</p>
-            <p className="text-2xl font-bold text-emerald-400 font-display mt-0.5">
+          <div className="min-w-0 flex-1">
+            <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold truncate">Total Earned</p>
+            <p className="text-2xl sm:text-3xl font-bold text-emerald-400 font-display mt-0.5 truncate">
               ₹{wallet.total_earned?.toFixed(2) || '0.00'}
             </p>
-            <p className="text-xs text-gray-500 mt-1">From mentoring & tasks</p>
+            <p className="text-xs text-gray-500 mt-1 truncate">From mentoring & tasks</p>
           </div>
         </div>
 
         {/* Total Spent Card */}
-        <div className="card p-6 flex items-center gap-4 border-white/10 hover:border-white/15 transition-colors">
-          <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
+        <div className="card p-5 sm:p-6 flex items-center gap-3.5 sm:gap-4 border-white/10 hover:border-white/15 transition-colors min-w-0">
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
             <TrendingDown size={22} className="text-red-400" />
           </div>
-          <div>
-            <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold">Total Spent / Withdrawn</p>
-            <p className="text-2xl font-bold text-red-400 font-display mt-0.5">
+          <div className="min-w-0 flex-1">
+            <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold truncate">Total Spent / Withdrawn</p>
+            <p className="text-2xl sm:text-3xl font-bold text-red-400 font-display mt-0.5 truncate">
               ₹{wallet.total_spent?.toFixed(2) || '0.00'}
             </p>
-            <p className="text-xs text-gray-500 mt-1">Sessions, tasks & payouts</p>
+            <p className="text-xs text-gray-500 mt-1 truncate">Sessions, tasks & payouts</p>
           </div>
         </div>
       </div>
@@ -303,33 +317,35 @@ export default function WalletPage() {
             {filteredTransactions.map((txn) => {
               const isCredit = txn.transaction_type === 'credit'
               return (
-                <div key={txn.id} className="flex items-center justify-between px-6 py-4 hover:bg-white/[0.02] transition-colors">
-                  <div className="flex items-center gap-3.5">
+                <div key={txn.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 sm:px-6 py-3.5 sm:py-4 hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
                         isCredit
                           ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
                           : 'bg-red-500/10 border border-red-500/20 text-red-400'
                       }`}
                     >
-                      {isCredit ? <ArrowDownLeft size={18} /> : <ArrowUpRight size={18} />}
+                      {isCredit ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-200">{txn.description}</p>
-                      <div className="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-gray-200 truncate">{txn.description}</p>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 text-xs text-gray-500">
                         <span>{new Date(txn.created_at).toLocaleString()}</span>
                         {txn.reference_id && (
                           <>
-                            <span>•</span>
-                            <span className="font-mono text-[11px] text-gray-400">Ref: {txn.reference_id}</span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="font-mono text-[11px] text-gray-400 truncate max-w-[180px]">Ref: {txn.reference_id}</span>
                           </>
                         )}
                       </div>
                     </div>
                   </div>
-                  <span className={`font-bold text-base ${isCredit ? 'text-emerald-400' : 'text-red-400'}`}>
-                    {isCredit ? '+' : '-'}₹{txn.amount.toFixed(2)}
-                  </span>
+                  <div className="self-end sm:self-auto shrink-0">
+                    <span className={`font-bold text-sm sm:text-base ${isCredit ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {isCredit ? '+' : '-'}₹{txn.amount.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               )
             })}
@@ -413,14 +429,10 @@ export default function WalletPage() {
                 {topupLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                 Pay ₹{parseFloat(topupAmount || 0).toFixed(2)} via Razorpay
               </button>
-              <a
-                href={paymentPageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full text-center py-2 text-xs text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-1.5"
-              >
-                Open Razorpay Payment Page <ExternalLink size={12} />
-              </a>
+              <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-1">
+                <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
+                <span>On-site Razorpay gateway • Instant wallet credit</span>
+              </div>
             </div>
           </div>
         </div>
