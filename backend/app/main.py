@@ -78,6 +78,7 @@ async def root():
         "status": "ok",
         "service": "TalentConnect API",
         "docs": "/api/docs",
-        "health": "/api/health",
-        "database_health": "/api/health/db",
+        "health_overall": "/api/health",
+        "health_server_only": "/api/health/server",
+        "health_database_only": "/api/health/db",
     }

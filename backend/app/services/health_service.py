@@ -13,6 +13,25 @@ from app.db.session import AsyncSessionLocal
 
 logger = logging.getLogger("talentconnect.health")
 
+SERVER_START_TIME = time.time()
+
+
+def get_server_health() -> Dict[str, Any]:
+    """
+    Returns health status of the Render FastAPI web service only (without querying database).
+    Lightweight check to keep Render container warm and responsive.
+    """
+    uptime_seconds = int(time.time() - SERVER_START_TIME)
+    return {
+        "status": "healthy",
+        "service": settings.APP_NAME,
+        "environment": settings.APP_ENV,
+        "target": "render_server_only",
+        "uptime_seconds": uptime_seconds,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "message": "Render web service is online and active.",
+    }
+
 
 async def check_database_health(db: Optional[AsyncSession] = None) -> Dict[str, Any]:
     """
