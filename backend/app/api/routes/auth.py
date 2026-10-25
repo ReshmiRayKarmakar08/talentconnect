@@ -3,12 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.db.session import get_db
+import httpx
 from app.schemas.schemas import (
     UserRegister,
     UserLogin,
     TokenResponse,
     RefreshRequest,
     PasswordResetRequest,
+    GoogleLoginRequest,
     UserPublic,
 )
 from app.core.security import (
@@ -206,3 +208,56 @@ async def forgot_password(data: PasswordResetRequest, db: AsyncSession = Depends
     if not user:
         raise HTTPException(status_code=404, detail="Account not found")
     return {"message": "Password updated successfully"}
+
+
+@router.post("/google", response_model=TokenResponse)
+async def google_login(data: GoogleLoginRequest, db: AsyncSession = Depends(get_db)):
+    """
+    Authenticate a user via Google OAuth ID Token (Google Identity Services).
+    Only assigns student/user role. Auto-provisions account and wallet if first time.
+    """
+    if not data.id_token:
+        raise HTTPException(status_code=400, detail="Missing Google ID token")
+
+    # Verify ID token directly with Google's public tokeninfo endpoint
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                "https://oauth2.googleapis.com/tokeninfo",
+                params={"id_token": data.id_token},
+            )
+            if resp.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid or expired Google token")
+            google_data = resp.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to communicate with Google authentication service: {str(e)}")
+
+    # Verify client ID audience if configured
+    if settings.GOOGLE_CLIENT_ID:
+        token_aud = google_data.get("aud")
+        if token_aud != settings.GOOGLE_CLIENT_ID:
+            raise HTTPException(status_code=401, detail="Google token client ID mismatch")
+
+    email = google_data.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="Google account has no associated email")
+
+    email_verified = str(google_data.get("email_verified", "")).lower() == "true"
+    if not email_verified:
+        raise HTTPException(status_code=400, detail="Google email address is not verified")
+
+    full_name = google_data.get("name") or email.split("@")[0]
+    avatar_url = google_data.get("picture")
+
+    from app.services.user_service import get_or_create_google_user
+    user = await get_or_create_google_user(db, email=email, full_name=full_name, avatar_url=avatar_url)
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Account suspended. Please contact support.")
+
+    return TokenResponse(
+        access_token=create_access_token({"sub": str(user.id), "role": user.role}),
+        refresh_token=create_refresh_token({"sub": str(user.id)}),
+    )

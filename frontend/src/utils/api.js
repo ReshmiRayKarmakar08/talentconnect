@@ -123,6 +123,7 @@ export const authAPI = {
   adminLogin:     ()  => api.post('/auth/admin-login'),
   me:             ()  => api.get('/auth/me'),
   forgotPassword: (d) => api.post('/auth/forgot-password', d),
+  googleLogin:    (d) => api.post('/auth/google', d),
 }
 
 export const usersAPI = {

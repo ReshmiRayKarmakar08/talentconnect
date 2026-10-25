@@ -5,6 +5,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import useAuthStore from '../store/authStore'
 import toast from 'react-hot-toast'
 import BrandMark from '../components/branding/BrandMark'
+import GoogleLoginButton from '../components/auth/GoogleLoginButton'
 import api, { authAPI } from '../utils/api'
 
 function AuthLayout({ children, title, subtitle, withCard = true }) {
@@ -110,6 +111,19 @@ export function LoginPage() {
 
         {mode === 'user' ? (
           <div className="mt-6">
+            <div className="mb-5">
+              <GoogleLoginButton label="Continue with Google" />
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-[#171b26] px-2 text-gray-400">or sign in with email</span>
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div>
           <label className="label">Email</label>
@@ -287,6 +301,19 @@ export function RegisterPage() {
 
   return (
     <AuthLayout title="Create account" subtitle="Join TalentConnect — learn, teach, earn">
+      <div className="mb-5">
+        <GoogleLoginButton label="Continue with Google" />
+
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[#171b26] px-2 text-gray-400">or sign up with email</span>
+          </div>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-3">
           <div>

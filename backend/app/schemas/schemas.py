@@ -28,6 +28,9 @@ class PasswordResetRequest(BaseModel):
     email: EmailStr
     new_password: str = Field(..., min_length=8)
 
+class GoogleLoginRequest(BaseModel):
+    id_token: str
+
 # ─── USER ────────────────────────────────────────────────────
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None

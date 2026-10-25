@@ -69,6 +69,16 @@ const useAuthStore = create((set, get) => ({
     return me.data
   },
 
+  loginWithGoogle: async (idToken) => {
+    const { data } = await authAPI.googleLogin({ id_token: idToken })
+    setTokens(data.access_token, data.refresh_token)
+    setAuthHeader(data.access_token)
+    const me = await authAPI.me()
+    set({ user: me.data, restoreError: false })
+    setCachedUser(me.data)
+    return me.data
+  },
+
   register: async (formData) => {
     await authAPI.register(formData)
     const { data } = await authAPI.login({

@@ -40,6 +40,76 @@ async def create_user(db: AsyncSession, data: UserRegister) -> User:
     return user
 
 
+async def get_or_create_google_user(
+    db: AsyncSession,
+    email: str,
+    full_name: str,
+    avatar_url: Optional[str] = None,
+) -> User:
+    import secrets
+    import re
+
+    # 1. Check if user already exists by email
+    user = await get_user_by_email(db, email)
+    if user:
+        if not user.avatar_url and avatar_url:
+            user.avatar_url = avatar_url
+            await db.commit()
+            await db.refresh(user)
+        return user
+
+    # 2. Derive unique username from email
+    base_username = re.sub(r"[^a-zA-Z0-9_]", "", email.split("@")[0].lower())
+    if len(base_username) < 3:
+        base_username = f"user_{secrets.token_hex(3)}"
+    username = base_username[:40]
+
+    counter = 1
+    while await get_user_by_username(db, username):
+        suffix = secrets.token_hex(2)
+        username = f"{base_username[:35]}_{suffix}"
+        counter += 1
+        if counter > 10:
+            username = f"user_{secrets.token_hex(5)}"
+            break
+
+    # 3. Create student user with a secure random password
+    random_password = secrets.token_urlsafe(24)
+    user = User(
+        email=email,
+        username=username,
+        full_name=full_name or username,
+        hashed_password=get_password_hash(random_password),
+        avatar_url=avatar_url,
+        role=UserRole.student,
+        is_active=True,
+        is_verified=True,
+    )
+    db.add(user)
+    await db.flush()
+
+    # 4. Create wallet with initial welcome bonus
+    wallet = Wallet(
+        user_id=user.id,
+        balance=float(settings.INITIAL_WALLET_CREDIT or 0),
+        total_earned=float(settings.INITIAL_WALLET_CREDIT or 0),
+    )
+    db.add(wallet)
+    await db.flush()
+    if settings.INITIAL_WALLET_CREDIT:
+        db.add(Transaction(
+            wallet_id=wallet.id,
+            amount=float(settings.INITIAL_WALLET_CREDIT),
+            transaction_type="credit",
+            description="Welcome bonus",
+            reference_id="welcome_bonus",
+        ))
+
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
 async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
     result = await db.execute(select(User).where(User.email == email))
     return result.scalar_one_or_none()
