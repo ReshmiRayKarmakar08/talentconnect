@@ -10,6 +10,7 @@ import {
   Users,
 } from 'lucide-react'
 import BrandMark from '../components/branding/BrandMark'
+import useAuthStore from '../store/authStore'
 
 const highlights = [
   {
@@ -67,6 +68,9 @@ function PreviewCard({ title, value, subtitle, badge }) {
 }
 
 export default function LandingPage() {
+  const { user } = useAuthStore()
+  const dashboardPath = user?.role === 'admin' ? '/admin' : '/dashboard'
+
   return (
     <div className="min-h-screen bg-surface text-gray-100">
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -77,10 +81,38 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-white/10 bg-surface/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
           <BrandMark />
-          <div className="flex items-center gap-3">
-            <NavButton to="/login">Login</NavButton>
-            <NavButton to="/login" primary>Get Started</NavButton>
-          </div>
+          {user ? (
+            <div className="flex items-center gap-3">
+              <Link
+                to={dashboardPath}
+                className="flex items-center gap-2.5 rounded-full border border-white/10 bg-white/5 py-1.5 pl-2 pr-3.5 text-xs font-medium text-gray-200 transition-colors hover:border-white/20 hover:bg-white/10"
+              >
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt={user.full_name} className="h-6 w-6 rounded-full object-cover" />
+                ) : (
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-600 text-[11px] font-bold text-white">
+                    {user.full_name?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                <span className="max-w-[130px] truncate">{user.full_name}</span>
+                <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-[10px] font-semibold text-brand-300">
+                  {user.role === 'admin' ? 'Admin' : 'Online'}
+                </span>
+              </Link>
+              <Link
+                to={dashboardPath}
+                className="btn-primary inline-flex items-center justify-center gap-1.5 text-xs font-semibold py-2 px-4"
+              >
+                <span>Dashboard</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <NavButton to="/login">Login</NavButton>
+              <NavButton to="/login" primary>Get Started</NavButton>
+            </div>
+          )}
         </div>
       </header>
 
@@ -98,14 +130,25 @@ export default function LandingPage() {
               TalentConnect is a collaborative academic platform where students connect with peers to exchange
               knowledge, book mentoring sessions, solve academic tasks, and receive intelligent learning guidance.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/login" className="btn-primary inline-flex items-center justify-center gap-2">
-                Start Learning <ArrowRight size={16} />
-              </Link>
-              <Link to="/login" className="btn-secondary inline-flex items-center justify-center gap-2">
-                Create Account <ChevronRight size={16} />
-              </Link>
-            </div>
+            {user ? (
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link to={dashboardPath} className="btn-primary inline-flex items-center justify-center gap-2">
+                  Go to Dashboard <ArrowRight size={16} />
+                </Link>
+                <Link to="/marketplace" className="btn-secondary inline-flex items-center justify-center gap-2">
+                  Explore Marketplace <ChevronRight size={16} />
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link to="/login" className="btn-primary inline-flex items-center justify-center gap-2">
+                  Start Learning <ArrowRight size={16} />
+                </Link>
+                <Link to="/login" className="btn-secondary inline-flex items-center justify-center gap-2">
+                  Create Account <ChevronRight size={16} />
+                </Link>
+              </div>
+            )}
             <div className="mt-10 grid max-w-xl grid-cols-3 gap-4 text-sm text-gray-400">
               <div>
                 <p className="text-2xl font-semibold text-white font-display">4</p>
@@ -128,12 +171,19 @@ export default function LandingPage() {
             <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-[#111726]/85 p-5 shadow-[0_24px_80px_rgba(6,10,24,0.6)] backdrop-blur-xl">
               <div className="mb-5 flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
-                  <p className="text-sm font-medium text-gray-200">Student workspace</p>
-                  <p className="mt-1 text-xs text-gray-500">Everything unlocked after login</p>
+                  <p className="text-sm font-medium text-gray-200">
+                    {user ? `Workspace: ${user.full_name}` : 'Student workspace'}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {user ? `Signed in as @${user.username}` : 'Everything unlocked after login'}
+                  </p>
                 </div>
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300">
-                  Live dashboard
-                </span>
+                <Link
+                  to={dashboardPath}
+                  className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+                >
+                  {user ? 'Open Workspace →' : 'Live dashboard'}
+                </Link>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

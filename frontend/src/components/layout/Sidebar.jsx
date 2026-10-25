@@ -38,48 +38,50 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        <div className="space-y-0.5">
+        <div className="space-y-1">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 clsx(
-                  'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40 focus-visible:ring-offset-0',
+                  'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors duration-200 group outline-none',
                   isActive
-                    ? 'bg-brand-600/20 text-brand-400 border border-brand-500/30'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-surface-hover'
+                    ? 'bg-brand-500/15 text-brand-400 border-brand-500/40 shadow-sm'
+                    : 'border-transparent text-gray-400 hover:text-gray-100 hover:bg-white/[0.06] hover:border-white/5'
                 )
               }
             >
-              <Icon size={17} />
-              {label}
+              <Icon size={17} className="shrink-0 transition-colors" />
+              <span>{label}</span>
             </NavLink>
           ))}
         </div>
 
         {user?.role === 'admin' && (
           <>
-            <div className="mt-4 mb-2 px-3.5">
-              <span className="text-xs font-semibold uppercase tracking-widest text-gray-600">Admin</span>
+            <div className="mt-5 mb-2 px-3.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">Admin</span>
             </div>
-            {adminItems.map(({ to, icon: Icon, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/30 focus-visible:ring-offset-0',
-                    isActive
-                      ? 'bg-red-500/10 text-red-400 border border-red-500/20'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-surface-hover'
-                  )
-                }
-              >
-                <Icon size={17} />
-                {label}
-              </NavLink>
-            ))}
+            <div className="space-y-1">
+              {adminItems.map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium border transition-colors duration-200 group outline-none',
+                      isActive
+                        ? 'bg-red-500/15 text-red-400 border-red-500/30 shadow-sm'
+                        : 'border-transparent text-gray-400 hover:text-gray-100 hover:bg-white/[0.06] hover:border-white/5'
+                    )
+                  }
+                >
+                  <Icon size={17} className="shrink-0 transition-colors" />
+                  <span>{label}</span>
+                </NavLink>
+              ))}
+            </div>
           </>
         )}
       </nav>
