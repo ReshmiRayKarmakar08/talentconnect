@@ -72,7 +72,7 @@ app.include_router(ai.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {
         "status": "ok",
