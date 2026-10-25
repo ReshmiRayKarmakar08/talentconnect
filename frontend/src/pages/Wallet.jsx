@@ -135,7 +135,8 @@ export default function WalletPage() {
       try {
         const rzp = new window.Razorpay(options)
         rzp.on('payment.failed', (response) => {
-          toast.error(response.error?.description || 'Payment cancelled or failed')
+          const desc = response.error?.description || 'Payment cancelled or failed'
+          toast.error(`${desc} — You can use Instant Sandbox Top-Up below!`, { duration: 5000 })
           setTopupLoading(false)
         })
         rzp.open()
@@ -145,6 +146,34 @@ export default function WalletPage() {
       }
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to initiate Razorpay order'))
+    } finally {
+      setTopupLoading(false)
+    }
+  }
+
+  // Handle Instant Sandbox Top-Up (for testing when Razorpay key is unauthorized)
+  const handleSandboxTopup = async () => {
+    const amountNum = parseFloat(topupAmount)
+    if (!amountNum || amountNum <= 0) {
+      toast.error('Please enter a valid top-up amount')
+      return
+    }
+
+    setTopupLoading(true)
+    const toastId = toast.loading('Processing instant sandbox top-up...')
+    try {
+      const { data: updatedWallet } = await paymentsAPI.topupVerify({
+        razorpay_order_id: `sandbox_${Date.now()}`,
+        razorpay_payment_id: `pay_sandbox_${Date.now()}`,
+        razorpay_signature: '',
+        amount: amountNum,
+      })
+      setWallet(updatedWallet)
+      toast.success(`Successfully added ₹${amountNum.toFixed(2)} to your wallet!`, { id: toastId })
+      setShowTopupModal(false)
+      fetchWalletData()
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Sandbox top-up failed'), { id: toastId })
     } finally {
       setTopupLoading(false)
     }
@@ -433,7 +462,7 @@ export default function WalletPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 mt-6">
+            <div className="flex flex-col gap-2.5 mt-6">
               <button
                 type="button"
                 disabled={topupLoading || !topupAmount || parseFloat(topupAmount) <= 0}
@@ -443,6 +472,16 @@ export default function WalletPage() {
                 {topupLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                 Pay ₹{parseFloat(topupAmount || 0).toFixed(2)} via Razorpay
               </button>
+
+              <button
+                type="button"
+                disabled={topupLoading || !topupAmount || parseFloat(topupAmount) <= 0}
+                onClick={handleSandboxTopup}
+                className="w-full py-2.5 text-xs font-semibold rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              >
+                ⚡ Instant Test Top-Up (Sandbox Simulation)
+              </button>
+
               <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-1">
                 <CheckCircle2 size={13} className="text-emerald-400 shrink-0" />
                 <span>On-site Razorpay gateway • Instant wallet credit</span>

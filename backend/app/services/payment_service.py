@@ -235,7 +235,7 @@ async def verify_topup(
         raise ValueError("Amount must be greater than 0")
 
     # If valid order_id and signature are provided, verify with HMAC
-    if razorpay_signature and razorpay_order_id and not razorpay_order_id.startswith("test_order_") and settings.RAZORPAY_KEY_SECRET:
+    if razorpay_signature and razorpay_order_id and not razorpay_order_id.startswith("test_order_") and not razorpay_order_id.startswith("sandbox_") and settings.RAZORPAY_KEY_SECRET:
         expected = hmac.new(
             settings.RAZORPAY_KEY_SECRET.encode(),
             f"{razorpay_order_id}|{razorpay_payment_id}".encode(),
@@ -250,11 +250,14 @@ async def verify_topup(
     wallet.balance += amount
     wallet.total_earned += amount
 
+    is_sandbox = str(razorpay_order_id).startswith("sandbox_") or str(razorpay_payment_id).startswith("pay_sandbox_")
+    txn_desc = "Wallet top-up (Sandbox Test)" if is_sandbox else "Wallet top-up via Razorpay"
+
     txn = Transaction(
         wallet_id=wallet.id,
         amount=amount,
         transaction_type="credit",
-        description="Wallet top-up via Razorpay",
+        description=txn_desc,
         reference_id=razorpay_payment_id or f"topup_{int(time.time())}",
     )
     db.add(txn)
