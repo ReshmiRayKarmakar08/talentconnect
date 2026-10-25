@@ -32,6 +32,7 @@ export default function WalletPage() {
   // Top Up Modal State
   const [showTopupModal, setShowTopupModal] = useState(false)
   const [topupAmount, setTopupAmount] = useState(100)
+  const [contactNumber, setContactNumber] = useState('')
   const [topupLoading, setTopupLoading] = useState(false)
 
   // Withdraw Modal State
@@ -85,15 +86,21 @@ export default function WalletPage() {
 
       const { data: order } = await paymentsAPI.topupOrder({ amount: amountNum })
 
+      const logoUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/logo.png`
+        : 'https://talentconnect-web.vercel.app/logo.png'
+
       const options = {
         key: order.key_id || razorpayKeyId,
         amount: order.amount,
         currency: order.currency || 'INR',
         name: 'TalentConnect',
         description: `Wallet Top-Up (₹${amountNum})`,
+        image: logoUrl,
         prefill: {
           name: user?.full_name || '',
           email: user?.email || '',
+          contact: contactNumber.trim() || user?.phone || '9999999999',
         },
         theme: {
           color: '#4f52e5',
@@ -136,7 +143,7 @@ export default function WalletPage() {
         const rzp = new window.Razorpay(options)
         rzp.on('payment.failed', (response) => {
           const desc = response.error?.description || 'Payment cancelled or failed'
-          toast.error(`${desc} — You can use Instant Sandbox Top-Up below!`, { duration: 5000 })
+          toast.error(desc)
           setTopupLoading(false)
         })
         rzp.open()
@@ -146,34 +153,6 @@ export default function WalletPage() {
       }
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to initiate Razorpay order'))
-    } finally {
-      setTopupLoading(false)
-    }
-  }
-
-  // Handle Instant Sandbox Top-Up (for testing when Razorpay key is unauthorized)
-  const handleSandboxTopup = async () => {
-    const amountNum = parseFloat(topupAmount)
-    if (!amountNum || amountNum <= 0) {
-      toast.error('Please enter a valid top-up amount')
-      return
-    }
-
-    setTopupLoading(true)
-    const toastId = toast.loading('Processing instant sandbox top-up...')
-    try {
-      const { data: updatedWallet } = await paymentsAPI.topupVerify({
-        razorpay_order_id: `sandbox_${Date.now()}`,
-        razorpay_payment_id: `pay_sandbox_${Date.now()}`,
-        razorpay_signature: '',
-        amount: amountNum,
-      })
-      setWallet(updatedWallet)
-      toast.success(`Successfully added ₹${amountNum.toFixed(2)} to your wallet!`, { id: toastId })
-      setShowTopupModal(false)
-      fetchWalletData()
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Sandbox top-up failed'), { id: toastId })
     } finally {
       setTopupLoading(false)
     }
@@ -450,6 +429,20 @@ export default function WalletPage() {
                 </div>
               </div>
 
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-xs font-semibold text-gray-300">Phone Number</label>
+                  <span className="text-[10px] text-gray-500 font-normal">Optional</span>
+                </div>
+                <input
+                  type="tel"
+                  value={contactNumber}
+                  onChange={(e) => setContactNumber(e.target.value)}
+                  className="input"
+                  placeholder="e.g. 9876543210 (optional)"
+                />
+              </div>
+
               <div className="rounded-xl border border-white/10 bg-white/5 p-3.5 text-xs text-gray-300 space-y-1">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Selected Amount:</span>
@@ -462,7 +455,7 @@ export default function WalletPage() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-2.5 mt-6">
+            <div className="flex flex-col gap-2 mt-6">
               <button
                 type="button"
                 disabled={topupLoading || !topupAmount || parseFloat(topupAmount) <= 0}
@@ -471,15 +464,6 @@ export default function WalletPage() {
               >
                 {topupLoading ? <Loader2 size={16} className="animate-spin" /> : null}
                 Pay ₹{parseFloat(topupAmount || 0).toFixed(2)} via Razorpay
-              </button>
-
-              <button
-                type="button"
-                disabled={topupLoading || !topupAmount || parseFloat(topupAmount) <= 0}
-                onClick={handleSandboxTopup}
-                className="w-full py-2.5 text-xs font-semibold rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-colors flex items-center justify-center gap-2 shadow-sm"
-              >
-                ⚡ Instant Test Top-Up (Sandbox Simulation)
               </button>
 
               <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 mt-1">
