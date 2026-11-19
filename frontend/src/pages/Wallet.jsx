@@ -161,7 +161,7 @@ export default function WalletPage() {
   }
 
   // Handle Withdrawal
-  // Handle Withdrawal
+
   const handleWithdraw = async (e) => {
     e.preventDefault()
     if (withdrawLoading) return
@@ -347,8 +347,8 @@ export default function WalletPage() {
                   <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${isCredit
-                          ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
-                          : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                        ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
+                        : 'bg-red-500/10 border border-red-500/20 text-red-400'
                         }`}
                     >
                       {isCredit ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
@@ -409,8 +409,8 @@ export default function WalletPage() {
                       type="button"
                       onClick={() => setTopupAmount(preset)}
                       className={`py-2 text-xs font-semibold rounded-xl border transition-colors ${topupAmount === preset
-                          ? 'bg-brand-600 text-white border-brand-500 shadow-sm'
-                          : 'bg-white/5 text-gray-300 border-white/10 hover:border-white/20'
+                        ? 'bg-brand-600 text-white border-brand-500 shadow-sm'
+                        : 'bg-white/5 text-gray-300 border-white/10 hover:border-white/20'
                         }`}
                     >
                       ₹{preset}
