@@ -8,7 +8,12 @@ const normalizeBaseUrl = (value) => {
   if (url.startsWith('http://') && window.location.protocol === 'https:') {
     url = url.replace('http://', 'https://')
   }
-  return url.replace(/\/+$/, '')
+  url = url.replace(/\/+$/, '')
+  // Ensure the base URL ends with /api if not already present
+  if (url && !url.endsWith('/api')) {
+    url = `${url}/api`
+  }
+  return url
 }
 
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'

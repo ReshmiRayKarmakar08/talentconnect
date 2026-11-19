@@ -63,17 +63,25 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 
 # ─── ROUTES ──────────────────────────────────────────────────
+# Routes are exposed under /api (standard) and at root level (fallback if frontend baseUrl omits /api)
 app.include_router(health.router, prefix="/api")
-app.include_router(health.router)  # Also expose /health, /health/db, /health/ping at root level
+app.include_router(health.router)
 app.include_router(auth.router, prefix="/api")
+app.include_router(auth.router)
 app.include_router(users.router, prefix="/api")
+app.include_router(users.router)
 app.include_router(skills.router, prefix="/api")
+app.include_router(skills.router)
 app.include_router(sessions.router, prefix="/api")
+app.include_router(sessions.router)
 app.include_router(tasks.router, prefix="/api")
+app.include_router(tasks.router)
 app.include_router(payments.router, prefix="/api")
-app.include_router(payments.router)  # Also expose /payments at root level
+app.include_router(payments.router)
 app.include_router(ai.router, prefix="/api")
+app.include_router(ai.router)
 app.include_router(admin.router, prefix="/api")
+app.include_router(admin.router)
 
 
 @app.exception_handler(Exception)
