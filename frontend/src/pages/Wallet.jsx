@@ -67,6 +67,7 @@ export default function WalletPage() {
     fetchWalletData()
   }, [])
 
+
   // Handle Top-Up via Razorpay
   const handleTopup = async () => {
     if (topupLoading) return
@@ -159,6 +160,7 @@ export default function WalletPage() {
     }
   }
 
+  // Handle Withdrawal
   // Handle Withdrawal
   const handleWithdraw = async (e) => {
     e.preventDefault()
@@ -344,11 +346,10 @@ export default function WalletPage() {
                 <div key={txn.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 sm:px-6 py-3.5 sm:py-4 hover:bg-white/[0.02] transition-colors">
                   <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                        isCredit
+                      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 ${isCredit
                           ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'
                           : 'bg-red-500/10 border border-red-500/20 text-red-400'
-                      }`}
+                        }`}
                     >
                       {isCredit ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
                     </div>
@@ -407,11 +408,10 @@ export default function WalletPage() {
                       key={preset}
                       type="button"
                       onClick={() => setTopupAmount(preset)}
-                      className={`py-2 text-xs font-semibold rounded-xl border transition-colors ${
-                        topupAmount === preset
+                      className={`py-2 text-xs font-semibold rounded-xl border transition-colors ${topupAmount === preset
                           ? 'bg-brand-600 text-white border-brand-500 shadow-sm'
                           : 'bg-white/5 text-gray-300 border-white/10 hover:border-white/20'
-                      }`}
+                        }`}
                     >
                       ₹{preset}
                     </button>
